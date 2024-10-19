@@ -4,13 +4,13 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.IntakeConstants.*;
+
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
-
-import static edu.wpi.first.units.Units.*;
-
 import edu.wpi.first.units.Angle;
 import edu.wpi.first.units.Measure;
 import edu.wpi.first.units.Velocity;
@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Mechanism;
-import static frc.robot.Constants.IntakeConstants.*;
 
 public class Intake extends SubsystemBase {
   TalonFX intakeMotor = new TalonFX(kIntakeMotorPort); // intake motor
@@ -29,15 +28,15 @@ public class Intake extends SubsystemBase {
   VelocityVoltage velocityRequest = new VelocityVoltage(0.0); // velocity PID request
   VoltageOut voltsOut = new VoltageOut(0.0); // for SysId
 
-  SysIdRoutine sysIdRoutine = new SysIdRoutine(
-    new Config(
-      Volts.of(0.6).per(Seconds.of(1.0)), // ramp us 0.6 V/s
-      Volts.of(6), // mas voltage 6V
-      Seconds.of(5), // run for at most 10 seconds
-      (state) -> SignalLogger.writeString("state", state.toString())
-    ),
-    new Mechanism(volts -> intakeMotor.setControl(voltsOut.withOutput(volts.in(Volts))), null, this)
-  );
+  SysIdRoutine sysIdRoutine =
+      new SysIdRoutine(
+          new Config(
+              Volts.of(0.6).per(Seconds.of(1.0)), // ramp us 0.6 V/s
+              Volts.of(6), // mas voltage 6V
+              Seconds.of(5), // run for at most 10 seconds
+              (state) -> SignalLogger.writeString("state", state.toString())),
+          new Mechanism(
+              volts -> intakeMotor.setControl(voltsOut.withOutput(volts.in(Volts))), null, this));
 
   public Intake() {
     intakeMotor.getConfigurator().apply(VELOCITY_PID_CONFIGS);
@@ -46,9 +45,9 @@ public class Intake extends SubsystemBase {
 
   public Command runIntake(Measure<Velocity<Angle>> velTarget) {
     return runEnd(
-        () -> intakeMotor.setControl(velocityRequest.withVelocity(velTarget.in(RotationsPerSecond))) ,
-        () -> intakeMotor.setControl(velocityRequest.withVelocity(0.0))
-      );
+        () ->
+            intakeMotor.setControl(velocityRequest.withVelocity(velTarget.in(RotationsPerSecond))),
+        () -> intakeMotor.setControl(velocityRequest.withVelocity(0.0)));
   }
 
   @Override
