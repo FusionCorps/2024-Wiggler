@@ -8,6 +8,10 @@ import static frc.robot.Constants.SwerveConstants.DriveTrain;
 import static frc.robot.Constants.SwerveConstants.MaxAngularRate;
 import static frc.robot.Constants.SwerveConstants.MaxSpeed;
 
+import com.ctre.phoenix6.Utils;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -33,6 +37,12 @@ public class RobotContainer {
             drivetrain.pointWheelsAt(() -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
     // reset the field-centric heading on left bumper press
     joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+
+    if (Utils.isSimulation()) {
+      drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
+    }
+
+    drivetrain.registerTelemetry(logger::telemeterize);
   }
 
   public RobotContainer() {
