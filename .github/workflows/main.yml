@@ -33,9 +33,6 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    # Runs a single command using the runners shell
-    - name: Compile and run tests on robot code
-      run: |
-    for dir in */; do
-      (cd "$dir" && ./gradlew build)
-    done
+    # FlexReboot
+    - name: Compile and run FlexReboot
+      run: cd ./FlexReboot && ./gradlew build
