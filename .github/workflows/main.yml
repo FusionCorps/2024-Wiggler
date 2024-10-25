@@ -30,6 +30,15 @@ jobs:
       run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
 
-    # FlexReboot
-    - name: Compile and run FlexReboot
-      run: cd ./FlexReboot && chmod +x ./gradlew && ./gradlew build
+    # Runs a single command using the runners shell
+    - name: Build FlexReboot
+      run: cd ./FlexReboot && chmod +x gradlew && ./gradlew build
+
+    - name: Build AdvKit2024
+      run: cd ./AdvKit2024 && chmod +x gradlew && ./gradlew build
+
+    - name: Build PIDArmSim
+      run: cd ./PIDArmSim && chmod +x gradlew && ./gradlew build
+
+    - name: Build TARSReboot
+      run: cd ./TARSReboot && chmod +x gradlew && ./gradlew build
