@@ -35,10 +35,17 @@ public class RobotContainer {
         .b()
         .whileTrue(
             drivetrain.pointWheelsAt(() -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
-
     // reset the field-centric heading on left bumper press
     joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+  }
 
+  private void configureBindings() {
+    drivetrain.setDefaultCommand(drivetrain.applyRequestDrive(() -> drive, () -> joystick));
+
+    // Configure the joystick
+    configureJoystick();
+    
+    // Register simulation & telemetry
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
