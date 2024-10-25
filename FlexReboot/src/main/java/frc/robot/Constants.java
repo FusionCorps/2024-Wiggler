@@ -6,11 +6,10 @@ import com.ctre.phoenix6.configs.Pigeon2Configuration;
 import com.ctre.phoenix6.configs.Slot0Configs;
 import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveDrivetrainConstants;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
-import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstantsFactory;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.ClosedLoopOutputType;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants.SteerFeedbackType;
-
+import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstantsFactory;
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
@@ -60,7 +59,6 @@ public class Constants {
     // TODO: This needs to be tuned to your individual robot
     public static final double kSpeedAt12VoltsMps = 6.21;
 
-  
     private static final double kCoupleRatio = 3;
 
     private static final double kDriveGearRatio = 5.142857142857142;
@@ -73,12 +71,18 @@ public class Constants {
     private static final String kCANbusName = "canivore";
     private static final int kPigeonId = 0;
 
-
     private static final SwerveDrivetrainConstants DrivetrainConstants =
         new SwerveDrivetrainConstants()
             .withCANbusName(kCANbusName)
             .withPigeon2Id(kPigeonId)
             .withPigeon2Configs(pigeonConfigs);
+
+    // These are only used for simulation
+    private static final double kSteerInertia = 0.00001;
+    private static final double kDriveInertia = 0.001;
+    // Simulated voltage necessary to overcome friction
+    private static final double kSteerFrictionVoltage = 0.25;
+    private static final double kDriveFrictionVoltage = 0.25;
 
     private static final SwerveModuleConstantsFactory ConstantCreator =
         new SwerveModuleConstantsFactory()
