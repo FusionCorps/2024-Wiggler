@@ -27,12 +27,10 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     private Notifier m_simNotifier = null;
     private double m_lastSimTime;
 
-    public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, double OdometryUpdateFrequency, SwerveModuleConstants... modules) {
-        super(driveTrainConstants, OdometryUpdateFrequency, modules);
-        if (Utils.isSimulation()) {
-            startSimThread();
-        }
-    }
+    // Brake request
+    private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+    private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
+
     public CommandSwerveDrivetrain(SwerveDrivetrainConstants driveTrainConstants, SwerveModuleConstants... modules) {
         super(driveTrainConstants, modules);
         if (Utils.isSimulation()) {
@@ -57,6 +55,20 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                 .withRotationalRate(-joystick.getRightX() * (1.5 * Math.PI))
         );
     }
+
+    // Brake command 
+    public Command applyRequestBrake() {
+        return this.applyRequest(() -> this.brake);
+    }
+
+    // Point command (B button)
+    public Command applyRequestPoint(Supplier<CommandXboxController> joystickSupplier) {
+        CommandXboxController joystick = joystickSupplier.get();
+        return this.applyRequest(
+            () -> point.withModuleDirection(new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))
+        );
+    } 
+
 
     private void startSimThread() {
         m_lastSimTime = Utils.getCurrentTimeSeconds();
