@@ -29,7 +29,19 @@ jobs:
     - name: Add repository to git safe directories
       run: git config --global --add safe.directory $GITHUB_WORKSPACE
 
+    # Grant execute permission for gradlew
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
 
-    # FlexReboot
-    - name: Compile and run FlexReboot
-      run: cd ./FlexReboot && chmod +x ./gradlew && ./gradlew build
+    # Runs a single command using the runners shell
+    - name: Build FlexReboot
+      run: cd ./FlexReboot && chmod +x gradlew && ./gradlew build
+
+    - name: Build AdvKit2024
+      run: cd ./AdvKit2024 && chmod +x gradlew && ./gradlew build
+
+    - name: Build PIDArmSim
+      run: cd ./PIDArmSim && chmod +x gradlew && ./gradlew build
+
+    - name: Build TARSReboot
+      run: cd ./TARSReboot && chmod +x gradlew && ./gradlew build
