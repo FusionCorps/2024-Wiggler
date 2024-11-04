@@ -22,6 +22,8 @@ public class RobotContainer {
   private final CommandXboxController joystick = new CommandXboxController(0); // My joystick
   private final CommandSwerveDrivetrain drivetrain = DriveTrain; // My drivetrain
 
+  // TODO: add Intake and bind its running command to a button
+
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
   private void configureBindings() {
