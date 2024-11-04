@@ -12,6 +12,7 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.PointWheelsAt;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SwerveDriveBrake;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
+import frc.robot.Robot;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 
@@ -30,6 +32,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
   private static final double kSimLoopPeriod = 0.005; // 5 ms
   private Notifier m_simNotifier = null;
   private double m_lastSimTime;
+
+  Vision vision;
 
   // Field centric request
   FieldCentric fieldCentricRequest =
@@ -59,6 +63,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     super(driveTrainConstants, OdometryUpdateFrequency, modules);
     if (Utils.isSimulation()) {
       startSimThread();
+      vision = new Vision(null, () -> m_odometry.getEstimatedPosition());
+    } else {
+      vision = new Vision(() -> m_pigeon2.getYaw().getValueAsDouble(), null);
     }
   }
 
@@ -101,6 +108,24 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                         : BlueAlliancePerspectiveRotation);
                 hasAppliedOperatorPerspective = true;
               });
+    }
+
+    if (Robot.isReal()) {
+      var poseEstimate = vision.getLimelightPoseEstimate();
+      if (Math.abs(m_pigeon2.getAngularVelocityZWorld().getValueAsDouble()) <= 720
+          && poseEstimate.tagCount > 0) {
+        // TODO: tune these standard deviations
+        addVisionMeasurement(
+            poseEstimate.pose, poseEstimate.timestampSeconds, VecBuilder.fill(.7, .7, 999999999));
+      }
+    } else {
+      var poseEstimate = vision.getSimulatedPoseEstimate();
+      if (poseEstimate.isPresent()) {
+        addVisionMeasurement(
+            poseEstimate.get().estimatedPose.toPose2d(),
+            poseEstimate.get().timestampSeconds,
+            VecBuilder.fill(.7, .7, 999999999));
+      }
     }
   }
 
