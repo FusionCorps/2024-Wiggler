@@ -9,11 +9,11 @@ import static frc.robot.Constants.SwerveConstants.MaxAngularRate;
 import static frc.robot.Constants.SwerveConstants.MaxSpeed;
 
 import com.ctre.phoenix6.Utils;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
@@ -23,6 +23,8 @@ public class RobotContainer {
   private final CommandSwerveDrivetrain drivetrain = DriveTrain; // My drivetrain
 
   private final Telemetry logger = new Telemetry(MaxSpeed);
+
+  private final Command auto = new PathPlannerAuto("TestAuto");
 
   private void configureBindings() {
     drivetrain.setDefaultCommand(
@@ -50,6 +52,7 @@ public class RobotContainer {
   }
 
   public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
+    // return Commands.print("No autonomous command configured");
+    return auto;
   }
 }

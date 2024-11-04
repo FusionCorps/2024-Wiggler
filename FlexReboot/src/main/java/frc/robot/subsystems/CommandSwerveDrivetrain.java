@@ -9,9 +9,14 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.ApplyChassisSpeeds;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.FieldCentric;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.PointWheelsAt;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SwerveDriveBrake;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.util.HolonomicPathFollowerConfig;
+import com.pathplanner.lib.util.PIDConstants;
+import com.pathplanner.lib.util.ReplanningConfig;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -43,6 +48,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
   SwerveDriveBrake brakeRequest = new SwerveDriveBrake();
   PointWheelsAt pointWheelsAtRequest = new PointWheelsAt();
 
+  // auton request
+  ApplyChassisSpeeds applyChassisSpeedsRequest = new ApplyChassisSpeeds();
+
   /** Alliance logic * */
   /* Blue alliance sees forward as 0 degrees (toward red alliance wall) */
   private final Rotation2d BlueAlliancePerspectiveRotation = Rotation2d.fromDegrees(0);
@@ -60,6 +68,28 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
     if (Utils.isSimulation()) {
       startSimThread();
     }
+
+    configurePathPlanner();
+  }
+
+  private void configurePathPlanner() {
+    double driveBaseRadius = 0;
+    for (var moduleLocation : m_moduleLocations) {
+      driveBaseRadius = Math.max(driveBaseRadius, moduleLocation.getNorm());
+    }
+    AutoBuilder.configureHolonomic(
+        () -> getState().Pose,
+        this::seedFieldRelative,
+        () -> m_kinematics.toChassisSpeeds(getState().ModuleStates),
+        speeds -> setControl(applyChassisSpeedsRequest.withSpeeds(speeds)),
+        new HolonomicPathFollowerConfig(
+            new PIDConstants(5, 0, 0),
+            new PIDConstants(5, 0, 0),
+            kSpeedAt12VoltsMps,
+            driveBaseRadius,
+            new ReplanningConfig()),
+        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+        this);
   }
 
   // Handles actual requests. Abstracted through other methods.
