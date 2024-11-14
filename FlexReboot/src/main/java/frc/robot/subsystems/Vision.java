@@ -2,12 +2,17 @@ package frc.robot.subsystems;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.Robot;
@@ -25,6 +30,7 @@ import org.photonvision.targeting.PhotonPipelineResult;
 
 public class Vision extends SubsystemBase {
   private final String llName = "limelight";
+  NetworkTable llTable = NetworkTableInstance.getDefault().getTable(llName);
 
   // TODO: find camera pose relative to robot empirically
   private Transform3d robotToCam = new Transform3d(new Translation3d(0, 0, 0.5), new Rotation3d());
@@ -73,19 +79,24 @@ public class Vision extends SubsystemBase {
     } else {
       // set up limelight
       // 2d data
-      tx = () -> LimelightHelpers.getTX(llName);
-      ty = () -> LimelightHelpers.getTY(llName);
+      tx = () -> llTable.getEntry("tx").getDouble(0.0);
+      ty = () -> llTable.getEntry("ty").getDouble(0.0);
 
       // 3d data
       this.megaTagYawGetter = yawGetter;
-      LimelightHelpers.setCameraPose_RobotSpace(
-          llName,
-          robotToCam.getX(),
-          robotToCam.getY(),
-          robotToCam.getZ(),
-          Units.radiansToDegrees(robotToCam.getRotation().getX()),
-          Units.radiansToDegrees(robotToCam.getRotation().getY()),
-          Units.radiansToDegrees(robotToCam.getRotation().getZ()));
+
+      // sets the camera's pose in the coordinate system of the robot.
+      llTable
+          .getEntry("camerapose_robotspace_set")
+          .setDoubleArray(
+              new double[] {
+                robotToCam.getX(),
+                robotToCam.getY(),
+                robotToCam.getZ(),
+                Units.radiansToDegrees(robotToCam.getRotation().getX()),
+                Units.radiansToDegrees(robotToCam.getRotation().getY()),
+                Units.radiansToDegrees(robotToCam.getRotation().getZ())
+              });
 
       limelightPoseEstimate = () -> LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(llName);
     }
@@ -94,12 +105,17 @@ public class Vision extends SubsystemBase {
   @Override
   public void periodic() {
     if (Robot.isReal()) {
-      LimelightHelpers.SetRobotOrientation(llName, megaTagYawGetter.getAsDouble(), 0, 0, 0, 0, 0);
+      // periodically set Robot Orientation and angular velocities in degrees and degrees per
+      // second[yaw,yawrate,pitch,pitchrate,roll,rollrate]
+      llTable
+          .getEntry("robot_orientation_set")
+          .setDoubleArray(new double[] {megaTagYawGetter.getAsDouble(), 0, 0, 0, 0, 0});
     }
   }
 
   @Override
   public void simulationPeriodic() {
+    // only relevant in simulation with photonvision
     var simCamResults = cameraSim.getCamera().getAllUnreadResults();
     if (simCamResults != null && simCamResults.size() > 0) {
       simCamResult = simCamResults.get(simCamResults.size() - 1);
@@ -148,9 +164,20 @@ public class Vision extends SubsystemBase {
 
   public boolean isTargetVisible() {
     if (Robot.isReal()) {
-      return LimelightHelpers.getTV(llName);
+      return 1 == llTable.getEntry("tv").getDouble(0);
     } else {
       return simCamResult.hasTargets();
+    }
+  }
+
+  public Vector<N3> getStdDevs() {
+    if (Robot.isReal()) {
+      // MegaTag Standard Deviations [MT1x, MT1y, MT1z, MT1roll, MT1pitch, MT1Yaw, MT2x, MT2y, MT2z,
+      // MT2roll, MT2pitch, MT2yaw]
+      double[] stdDevsRaw = llTable.getEntry("stddevs").getDoubleArray(new double[0]);
+      return VecBuilder.fill(stdDevsRaw[6], stdDevsRaw[8], stdDevsRaw[11]);
+    } else {
+      return VecBuilder.fill(.7, .7, 999999999);
     }
   }
 }

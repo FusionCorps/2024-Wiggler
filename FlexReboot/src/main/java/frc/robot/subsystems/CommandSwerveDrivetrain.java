@@ -114,9 +114,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
       var poseEstimate = vision.getLimelightPoseEstimate();
       if (Math.abs(m_pigeon2.getAngularVelocityZWorld().getValueAsDouble()) <= 720
           && poseEstimate.tagCount > 0) {
-        // TODO: tune these standard deviations
-        addVisionMeasurement(
-            poseEstimate.pose, poseEstimate.timestampSeconds, VecBuilder.fill(.7, .7, 999999999));
+        addVisionMeasurement(poseEstimate.pose, poseEstimate.timestampSeconds, vision.getStdDevs());
       }
     } else {
       var poseEstimate = vision.getSimulatedPoseEstimate();
