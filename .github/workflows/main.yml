@@ -42,3 +42,9 @@ jobs:
 
     - name: Build TARSReboot
       run: cd ./TARSReboot && chmod +x gradlew && ./gradlew build
+
+    - name: Build Minibot
+      run: cd ./Minibot && chmod +x gradlew && ./gradlew build
+
+    - name: Build PrimusReboot
+      run: cd ./PrimusReboot && chmod +x gradlew && ./gradlew build
