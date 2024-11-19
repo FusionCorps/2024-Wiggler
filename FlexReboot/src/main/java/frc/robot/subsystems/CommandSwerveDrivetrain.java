@@ -56,7 +56,7 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
   private FieldCentric fieldCentricRequest =
       new FieldCentric()
           .withSteerRequestType(SteerRequestType.MotionMagic)
-          .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+          .withDriveRequestType(DriveRequestType.Velocity)
           .withDeadband(MaxSpeed * 0.1)
           .withRotationalDeadband(MaxAngularRate * 0.1);
 
@@ -72,9 +72,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
   private SysIdRoutine sysIdRoutineTranslation =
       new SysIdRoutine(
           new SysIdRoutine.Config(
-              null,
-              Volts.of(4),
-              null,
+              Volts.of(0.5).per(Seconds.of(1)),
+              Volts.of(2),
+              Seconds.of(5),
               state -> SignalLogger.writeString("stateTranslation", state.toString())),
           new SysIdRoutine.Mechanism(
               volts -> setControl(sysIdSwerveTranslation.withVolts(volts)), null, this));
@@ -125,11 +125,17 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
 
   @Override
   public void periodic() {
-    /* Periodically try to apply the operator perspective
-     * If we haven't applied the operator perspective before, then we should apply it regardless of DS state
-     * This allows us to correct the perspective in case the robot code restarts mid-match
-     * Otherwise, only check and apply the operator perspective if the DS is disabled
-     * This ensures driving behavior doesn't change until an explicit disable event occurs during testing */
+    /*
+     * Periodically try to apply the operator perspective
+     * If we haven't applied the operator perspective before, then we should apply
+     * it regardless of DS state
+     * This allows us to correct the perspective in case the robot code restarts
+     * mid-match
+     * Otherwise, only check and apply the operator perspective if the DS is
+     * disabled
+     * This ensures driving behavior doesn't change until an explicit disable event
+     * occurs during testing
+     */
     if (!hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
       DriverStation.getAlliance()
           .ifPresent(
@@ -173,10 +179,12 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
                 new Rotation2d(x.getAsDouble(), y.getAsDouble())));
   }
 
-  /** Command to run SysId, based on enum defined above. 
+  /**
+   * Command to run SysId, based on enum defined above.
+   *
    * @param isDynamic true for dynamic, false for quasistatic.
    * @param direction Direction to run the SysId in, forward or reverse.
-  */
+   */
   public Command runSysId(boolean isDynamic, Direction direction) {
     switch (sysIdMode) {
       case Translation:

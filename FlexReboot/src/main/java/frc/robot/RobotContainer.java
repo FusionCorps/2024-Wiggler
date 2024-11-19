@@ -33,16 +33,20 @@ public class RobotContainer {
             () -> -joystick.getLeftY() * MaxSpeed,
             () -> -joystick.getLeftX() * MaxSpeed,
             () -> -joystick.getRightX() * MaxAngularRate));
-    joystick.b().whileTrue(drivetrain.brake());
     joystick
-        .a()
-        .whileTrue(
-            drivetrain.pointWheelsAt(() -> -joystick.getLeftY(), () -> -joystick.getLeftX()));
-    // reset the field-centric heading on left bumper press
-    joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+        .b()
+        .onTrue(
+            drivetrain
+                .runOnce(() -> drivetrain.seedFieldRelative())
+                .alongWith(Commands.print("Gyro reset"))
+                .withName("Reset Gyro"));
 
-    joystick.back().onTrue(Commands.runOnce(() -> SignalLogger.stop()));
-    joystick.start().onTrue(Commands.runOnce(() -> SignalLogger.start()));
+    joystick
+        .back()
+        .onTrue(Commands.runOnce(() -> SignalLogger.stop()).andThen(Commands.print("end")));
+    joystick
+        .start()
+        .onTrue(Commands.runOnce(() -> SignalLogger.start()).andThen(Commands.print("start")));
 
     // SPECIFIC MODE IS DEFINED IN DRIVETRAIN SUBSYSTEM
     joystick.povUp().onTrue(drivetrain.runSysId(false, Direction.kForward));
