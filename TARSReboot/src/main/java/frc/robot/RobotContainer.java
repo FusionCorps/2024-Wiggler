@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
@@ -13,6 +14,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
 
@@ -39,30 +41,31 @@ public class RobotContainer {
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
   private void configureBindings() {
-    drivetrain.setDefaultCommand( // Drivetrain will execute this command periodically
-        drivetrain.applyRequest(
-            () ->
-                drive
-                    .withVelocityX(-joystick.getLeftY() * MaxSpeed) // Drive forward with
-                    // negative Y (forward)
-                    .withVelocityY(
-                        -joystick.getLeftX() * MaxSpeed) // Drive left with negative X (left)
-                    .withRotationalRate(
-                        joystick.getRightX()
-                            * MaxAngularRate) // Drive counterclockwise with negative X (left)
-            ));
-
-    joystick.a().whileTrue(drivetrain.applyRequest(() -> brake));
+    drivetrain.setDefaultCommand(
+        drivetrain.runSwerveFC(
+            () -> -joystick.getLeftY() * MaxSpeed,
+            () -> -joystick.getLeftX() * MaxSpeed,
+            () -> joystick.getRightX() * MaxAngularRate));
     joystick
         .b()
-        .whileTrue(
-            drivetrain.applyRequest(
-                () ->
-                    point.withModuleDirection(
-                        new Rotation2d(-joystick.getLeftY(), -joystick.getLeftX()))));
+        .onTrue(
+            drivetrain
+                .runOnce(() -> drivetrain.seedFieldRelative())
+                .alongWith(Commands.print("Gyro reset"))
+                .withName("Reset Gyro"));
 
-    // reset the field-centric heading on left bumper press
-    joystick.leftBumper().onTrue(drivetrain.runOnce(() -> drivetrain.seedFieldRelative()));
+    joystick
+        .back()
+        .onTrue(Commands.runOnce(() -> SignalLogger.stop()).andThen(Commands.print("end")));
+    joystick
+        .start()
+        .onTrue(Commands.runOnce(() -> SignalLogger.start()).andThen(Commands.print("start")));
+
+    // SPECIFIC MODE IS DEFINED IN DRIVETRAIN SUBSYSTEM
+    joystick.povUp().onTrue(drivetrain.runSysId(false, Direction.kForward));
+    joystick.povDown().onTrue(drivetrain.runSysId(false, Direction.kReverse));
+    joystick.povRight().onTrue(drivetrain.runSysId(true, Direction.kForward));
+    joystick.povLeft().onTrue(drivetrain.runSysId(true, Direction.kReverse));
 
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));

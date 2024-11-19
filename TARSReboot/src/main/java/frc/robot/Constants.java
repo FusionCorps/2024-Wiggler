@@ -237,6 +237,6 @@ public final class Constants {
 
     public static final CommandSwerveDrivetrain DriveTrain =
         new CommandSwerveDrivetrain(
-            DrivetrainConstants, FrontLeft, FrontRight, BackLeft, BackRight);
+            DrivetrainConstants, 250, FrontLeft, FrontRight, BackLeft, BackRight);
   }
 }
