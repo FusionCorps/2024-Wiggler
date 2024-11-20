@@ -1,7 +1,6 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.SwerveConstants.*;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -56,9 +55,9 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
   private FieldCentric fieldCentricRequest =
       new FieldCentric()
           .withSteerRequestType(SteerRequestType.MotionMagic)
-          .withDriveRequestType(DriveRequestType.Velocity)
-          .withDeadband(MaxSpeed * 0.1)
-          .withRotationalDeadband(MaxAngularRate * 0.1);
+          .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+          .withDeadband(6 * 0.1)
+          .withRotationalDeadband(Math.PI * 0.1);
 
   // Brake & point requests
   private SwerveDriveBrake brakeRequest = new SwerveDriveBrake();

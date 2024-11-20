@@ -4,12 +4,10 @@
 
 package frc.robot;
 
-import static frc.robot.Constants.SwerveConstants.DriveTrain;
-import static frc.robot.Constants.SwerveConstants.MaxAngularRate;
-import static frc.robot.Constants.SwerveConstants.MaxSpeed;
-
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -17,25 +15,37 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Constants.DrivetrainConstants;
 import frc.robot.subsystems.CommandSwerveDrivetrain;
-import frc.robot.subsystems.Intake;
 
 public class RobotContainer {
+  private double MaxSpeed =
+      DrivetrainConstants.kSpeedAt12VoltsMps; // kSpeedAt12VoltsMps desired top speed
+  private double MaxAngularRate =
+      1.5 * Math.PI; // 3/4 of a rotation per second max angular velocity
+
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final CommandXboxController joystick = new CommandXboxController(0); // My joystick
-  private final CommandSwerveDrivetrain drivetrain = DriveTrain; // My drivetrain
-  private final Intake intake = new Intake();
+  private final CommandSwerveDrivetrain drivetrain =
+      DrivetrainConstants.DriveTrain; // My drivetrain
+
+  private final SwerveRequest.FieldCentric drive =
+      new SwerveRequest.FieldCentric()
+          .withDeadband(MaxSpeed * 0.1)
+          .withRotationalDeadband(MaxAngularRate * 0.1) // Add a 10% deadband
+          .withDriveRequestType(DriveRequestType.OpenLoopVoltage); // I want field-centric
+  // driving in open loop
+  private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
+  private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
   private final Telemetry logger = new Telemetry(MaxSpeed);
 
-  // SPECIFY WHICH SYSID TO RUN HERE
   private void configureBindings() {
     drivetrain.setDefaultCommand(
         drivetrain.runSwerveFC(
             () -> -joystick.getLeftY() * MaxSpeed,
             () -> -joystick.getLeftX() * MaxSpeed,
-            () -> -joystick.getRightX() * MaxAngularRate));
-    
+            () -> joystick.getRightX() * MaxAngularRate));
     joystick
         .b()
         .onTrue(
@@ -43,7 +53,6 @@ public class RobotContainer {
                 .runOnce(() -> drivetrain.seedFieldRelative())
                 .alongWith(Commands.print("Gyro reset"))
                 .withName("Reset Gyro"));
-    joystick.a().whileTrue(intake.runIntake());
 
     joystick
         .back()
@@ -61,7 +70,6 @@ public class RobotContainer {
     if (Utils.isSimulation()) {
       drivetrain.seedFieldRelative(new Pose2d(new Translation2d(), Rotation2d.fromDegrees(90)));
     }
-
     drivetrain.registerTelemetry(logger::telemeterize);
   }
 
