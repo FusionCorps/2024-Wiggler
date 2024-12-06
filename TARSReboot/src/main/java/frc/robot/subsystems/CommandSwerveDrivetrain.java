@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.DrivetrainConstants.kSpeedAt12VoltsMps;
 
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
@@ -17,8 +18,6 @@ import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SysIdSwerveRotation;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SysIdSwerveSteerGains;
 import com.ctre.phoenix6.mechanisms.swerve.SwerveRequest.SysIdSwerveTranslation;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -55,8 +54,8 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
   private FieldCentric fieldCentricRequest =
       new FieldCentric()
           .withSteerRequestType(SteerRequestType.MotionMagic)
-          .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
-          .withDeadband(6 * 0.1)
+          .withDriveRequestType(DriveRequestType.Velocity)
+          .withDeadband(kSpeedAt12VoltsMps * 0.1)
           .withRotationalDeadband(Math.PI * 0.1);
 
   // Brake & point requests
@@ -135,17 +134,17 @@ public class CommandSwerveDrivetrain extends SwerveDrivetrain implements Subsyst
      * This ensures driving behavior doesn't change until an explicit disable event
      * occurs during testing
      */
-    if (!hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
-      DriverStation.getAlliance()
-          .ifPresent(
-              (allianceColor) -> {
-                this.setOperatorPerspectiveForward(
-                    allianceColor == Alliance.Red
-                        ? RedAlliancePerspectiveRotation
-                        : BlueAlliancePerspectiveRotation);
-                hasAppliedOperatorPerspective = true;
-              });
-    }
+    // if (!hasAppliedOperatorPerspective || DriverStation.isDisabled()) {
+    //   DriverStation.getAlliance()
+    //       .ifPresent(
+    //           (allianceColor) -> {
+    //             this.setOperatorPerspectiveForward(
+    //                 allianceColor == Alliance.Red
+    //                     ? RedAlliancePerspectiveRotation
+    //                     : BlueAlliancePerspectiveRotation);
+    //             hasAppliedOperatorPerspective = true;
+    //           });
+    // }
   }
 
   /**

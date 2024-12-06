@@ -4,7 +4,8 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Minute;
+import static edu.wpi.first.units.Units.Rotations;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
@@ -73,7 +74,13 @@ public final class Constants {
     // When using closed-loop control, the drive motor uses the control
     // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
     private static final Slot0Configs driveGains =
-        new Slot0Configs().withKP(3).withKI(0).withKD(0).withKS(0).withKV(0).withKA(0);
+        new Slot0Configs()
+            .withKP(0.1661)
+            .withKI(0)
+            .withKD(0)
+            .withKS(0.11102)
+            .withKV(0.11088)
+            .withKA(0.010752);
 
     // The closed-loop output type to use for the steer motors;
     // This affects the PID/FF gains for the steer motors
@@ -114,8 +121,8 @@ public final class Constants {
     private static final double kSteerGearRatio = 12.8;
     private static final double kWheelRadiusInches = 2;
 
-    private static final boolean kInvertLeftSide = true;
-    private static final boolean kInvertRightSide = false;
+    private static final boolean kInvertLeftSide = false;
+    private static final boolean kInvertRightSide = true;
 
     private static final String kCANbusName = "";
     private static final int kPigeonId = 0;
@@ -148,7 +155,7 @@ public final class Constants {
             .withDriveInertia(kDriveInertia)
             .withSteerFrictionVoltage(kSteerFrictionVoltage)
             .withDriveFrictionVoltage(kDriveFrictionVoltage)
-            .withFeedbackSource(SteerFeedbackType.FusedCANcoder)
+            .withFeedbackSource(SteerFeedbackType.RemoteCANcoder)
             .withCouplingGearRatio(kCoupleRatio)
             .withDriveMotorInitialConfigs(driveInitialConfigs)
             .withSteerMotorInitialConfigs(steerInitialConfigs)

@@ -45,7 +45,7 @@ public class RobotContainer {
         drivetrain.runSwerveFC(
             () -> -joystick.getLeftY() * MaxSpeed,
             () -> -joystick.getLeftX() * MaxSpeed,
-            () -> joystick.getRightX() * MaxAngularRate));
+            () -> -joystick.getRightX() * MaxAngularRate));
     joystick
         .b()
         .onTrue(
