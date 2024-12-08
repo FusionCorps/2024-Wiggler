@@ -2,11 +2,10 @@ package frc.robot.subsystems.intake;
 
 import static frc.robot.Constants.driverController;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import org.littletonrobotics.junction.Logger;
 
 public class Intake extends SubsystemBase {
   private IntakeIO intakeIO;
@@ -25,9 +24,8 @@ public class Intake extends SubsystemBase {
 
   public Command intakeCommand() {
     return Commands.sequence(
-      runOnce(() -> intakeIO.setIntakeVoltage(2.0)),
-      Commands.waitSeconds(2.0),
-      runOnce(() -> intakeIO.setIntakeVoltage(0.0))
-    );
+        runOnce(() -> intakeIO.setIntakeVoltage(2.0)),
+        Commands.waitSeconds(2.0),
+        runOnce(() -> intakeIO.setIntakeVoltage(0.0)));
   }
 }

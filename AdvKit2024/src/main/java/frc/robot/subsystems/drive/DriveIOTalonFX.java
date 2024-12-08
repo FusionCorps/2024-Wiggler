@@ -7,7 +7,6 @@ import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.NeutralModeValue;
-
 import edu.wpi.first.math.util.Units;
 
 public class DriveIOTalonFX implements DriveIO {
@@ -23,7 +22,7 @@ public class DriveIOTalonFX implements DriveIO {
   private StatusSignal<Double> leftDriveMotorPosRad = leftDriveMotor.getPosition();
   private StatusSignal<Double> leftDriveMotorVelocityRadPerSec = leftDriveMotor.getVelocity();
   private StatusSignal<Double> leftDriveMotorAppliedVolts = leftDriveMotor.getMotorVoltage();
-  
+
   private StatusSignal<Double> rightDriveMotorPosRad = rightDriveMotor.getPosition();
   private StatusSignal<Double> rightDriveMotorVelocityRadPerSec = rightDriveMotor.getVelocity();
   private StatusSignal<Double> rightDriveMotorAppliedVolts = rightDriveMotor.getMotorVoltage();
@@ -31,17 +30,21 @@ public class DriveIOTalonFX implements DriveIO {
   public DriveIOTalonFX() {
     leftDriveMotor.setInverted(false);
     rightDriveMotor.setInverted(true);
-    leftDriveMotor.getConfigurator().apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
-    rightDriveMotor.getConfigurator().apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
+    leftDriveMotor
+        .getConfigurator()
+        .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
+    rightDriveMotor
+        .getConfigurator()
+        .apply(new MotorOutputConfigs().withNeutralMode(NeutralModeValue.Brake));
 
     BaseStatusSignal.setUpdateFrequencyForAll(
-      60,
-      leftDriveMotorPosRad,
-      leftDriveMotorVelocityRadPerSec,
-      leftDriveMotorAppliedVolts,
-      rightDriveMotorPosRad,
-      rightDriveMotorVelocityRadPerSec,
-      rightDriveMotorAppliedVolts);
+        60,
+        leftDriveMotorPosRad,
+        leftDriveMotorVelocityRadPerSec,
+        leftDriveMotorAppliedVolts,
+        rightDriveMotorPosRad,
+        rightDriveMotorVelocityRadPerSec,
+        rightDriveMotorAppliedVolts);
     leftDriveMotor.optimizeBusUtilization();
     rightDriveMotor.optimizeBusUtilization();
   }
@@ -61,20 +64,22 @@ public class DriveIOTalonFX implements DriveIO {
   @Override
   public void updateInputs(DriveIOInputs inputs) {
     BaseStatusSignal.refreshAll(
-      leftDriveMotorPosRad,
-      leftDriveMotorVelocityRadPerSec,
-      leftDriveMotorAppliedVolts,
-      rightDriveMotorPosRad,
-      rightDriveMotorVelocityRadPerSec,
-      rightDriveMotorAppliedVolts
-    );
+        leftDriveMotorPosRad,
+        leftDriveMotorVelocityRadPerSec,
+        leftDriveMotorAppliedVolts,
+        rightDriveMotorPosRad,
+        rightDriveMotorVelocityRadPerSec,
+        rightDriveMotorAppliedVolts);
 
     inputs.leftDriveMotorAppliedVolts = leftDriveMotorAppliedVolts.getValueAsDouble();
     inputs.leftDriveMotorPosRad = Units.rotationsToRadians(leftDriveMotorPosRad.getValueAsDouble());
-    inputs.leftDriveMotorVelocityRadPerSec = Units.rotationsToRadians(leftDriveMotorVelocityRadPerSec.getValueAsDouble());
+    inputs.leftDriveMotorVelocityRadPerSec =
+        Units.rotationsToRadians(leftDriveMotorVelocityRadPerSec.getValueAsDouble());
 
     inputs.rightDriveMotorAppliedVolts = rightDriveMotorAppliedVolts.getValueAsDouble();
-    inputs.rightDriveMotorPosRad = Units.rotationsToRadians(rightDriveMotorPosRad.getValueAsDouble());
-    inputs.rightDriveMotorVelocityRadPerSec = Units.rotationsToRadians(rightDriveMotorVelocityRadPerSec.getValueAsDouble());
+    inputs.rightDriveMotorPosRad =
+        Units.rotationsToRadians(rightDriveMotorPosRad.getValueAsDouble());
+    inputs.rightDriveMotorVelocityRadPerSec =
+        Units.rotationsToRadians(rightDriveMotorVelocityRadPerSec.getValueAsDouble());
   }
 }

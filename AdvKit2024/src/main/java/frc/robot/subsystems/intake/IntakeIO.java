@@ -10,7 +10,7 @@ public interface IntakeIO {
     public double intakeVelocityRadPerSec = 0.0;
   }
 
-  public default void updateInputs(IntakeIOInputs inputs) {} 
+  public default void updateInputs(IntakeIOInputs inputs) {}
 
   public default void setIntakeVelocity(double velocityRadPerSec) {}
 

@@ -16,7 +16,8 @@ public interface DriveIO {
 
   public default void updateInputs(DriveIOInputs inputs) {}
 
-  public default void setDriveVelocity(double leftVelocityRadPerSec, double rightVelocityRadPerSec) {}
+  public default void setDriveVelocity(
+      double leftVelocityRadPerSec, double rightVelocityRadPerSec) {}
 
   public default void setDriveVoltage(double leftVolts, double rightVolts) {}
 }

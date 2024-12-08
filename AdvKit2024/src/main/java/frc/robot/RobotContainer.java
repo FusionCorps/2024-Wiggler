@@ -14,7 +14,7 @@ import frc.robot.subsystems.intake.IntakeIOSim;
 public class RobotContainer {
   private final Intake intake;
   private final Drive drive;
-  
+
   public RobotContainer() {
     intake = new Intake(new IntakeIOSim());
     drive = new Drive(new DriveIOSim());

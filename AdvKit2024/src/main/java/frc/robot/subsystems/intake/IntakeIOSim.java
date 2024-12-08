@@ -16,8 +16,9 @@ public class IntakeIOSim implements IntakeIO {
   @Override
   public void setIntakeVelocity(double velocityRadPerSec) {
     intakeMotorSim.setInputVoltage(
-      intakeFeedforward.calculate(velocityRadPerSec) + intakeController.calculate(intakeMotorSim.getAngularVelocityRadPerSec(), velocityRadPerSec)
-    );
+        intakeFeedforward.calculate(velocityRadPerSec)
+            + intakeController.calculate(
+                intakeMotorSim.getAngularVelocityRadPerSec(), velocityRadPerSec));
   }
 
   @Override
@@ -33,5 +34,4 @@ public class IntakeIOSim implements IntakeIO {
     inputs.intakePosRad = intakeMotorSim.getAngularPositionRad();
     inputs.intakeVelocityRadPerSec = intakeMotorSim.getAngularVelocityRadPerSec();
   }
-  
 }
