@@ -39,6 +39,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -56,6 +57,9 @@ import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.util.LocalADStarAK;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import org.ironmaple.simulation.drivesims.COTS;
+import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
+import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -73,12 +77,12 @@ public class Drive extends SubsystemBase {
               Math.hypot(DriveConstants.BackRight.LocationX, DriveConstants.BackRight.LocationY)));
 
   // PathPlanner config constants
-  private static final double ROBOT_MASS_KG = 74.088;
-  private static final double ROBOT_MOI = 6.883;
-  private static final double WHEEL_COF = 1.2;
+  private static final Mass ROBOT_MASS = Pounds.of(115.0);
+  private static final double ROBOT_MOI = 2.0; // TODO: find more accurate value
+  private static final double WHEEL_COF = 1.19;
   private static final RobotConfig PP_CONFIG =
       new RobotConfig(
-          ROBOT_MASS_KG,
+          ROBOT_MASS.in(Kilograms),
           ROBOT_MOI,
           new ModuleConfig(
               DriveConstants.FrontLeft.WheelRadius,
@@ -89,6 +93,24 @@ public class Drive extends SubsystemBase {
               DriveConstants.FrontLeft.SlipCurrent,
               1),
           getModuleTranslations());
+
+  public static final DriveTrainSimulationConfig MAPLE_SIM_CONFIG =
+      DriveTrainSimulationConfig.Default()
+          .withRobotMass(ROBOT_MASS)
+          .withCustomModuleTranslations(getModuleTranslations())
+          .withGyro(COTS.ofPigeon2())
+          .withSwerveModule(
+              () ->
+                  new SwerveModuleSimulation(
+                      DCMotor.getKrakenX60(1),
+                      DCMotor.getFalcon500(1),
+                      DriveConstants.FrontLeft.DriveMotorGearRatio,
+                      DriveConstants.FrontLeft.SteerMotorGearRatio,
+                      Volts.of(DriveConstants.FrontLeft.DriveFrictionVoltage),
+                      Volts.of(DriveConstants.FrontLeft.SteerFrictionVoltage),
+                      Meters.of(DriveConstants.FrontLeft.WheelRadius),
+                      KilogramSquareMeters.of(DriveConstants.FrontLeft.SteerInertia),
+                      WHEEL_COF));
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;

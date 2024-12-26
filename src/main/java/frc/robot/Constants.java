@@ -84,8 +84,8 @@ public final class Constants {
             .withKP(0.17029)
             .withKI(0)
             .withKD(0)
-            .withKS(0)
-            .withKV(0.11144)
+            .withKS(0.06650)
+            .withKV(0.71338)
             .withKA(0.077262);
 
     // The closed-loop output type to use for the steer motors;
@@ -134,7 +134,7 @@ public final class Constants {
 
     private static final double kDriveGearRatio = 5.142857142857142;
     private static final double kSteerGearRatio = 12.8;
-    private static final Distance kWheelRadius = Inches.of(2);
+    private static final Distance kWheelRadius = Inches.of(2.194);
 
     private static final boolean kInvertLeftSide = false;
     private static final boolean kInvertRightSide = true;
@@ -142,8 +142,8 @@ public final class Constants {
     private static final int kPigeonId = 0;
 
     // These are only used for simulation
-    private static final double kSteerInertia = 0.00001;
-    private static final double kDriveInertia = 0.001;
+    private static final double kSteerInertia = 0.01;
+    private static final double kDriveInertia = 0.025;
     // Simulated voltage necessary to overcome friction
     private static final Voltage kSteerFrictionVoltage = Volts.of(0.25);
     private static final Voltage kDriveFrictionVoltage = Volts.of(0.25);
@@ -277,12 +277,12 @@ public final class Constants {
 
   public class VisionConstants {
     // AprilTag layout
-    public static AprilTagFieldLayout aprilTagLayout =
+    public static AprilTagFieldLayout APRILTAG_LAYOUT =
         AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField);
 
     // Camera names, must match names configured on coprocessor
-    public static String camera0Name = "camera_0";
-    public static String camera1Name = "camera_1";
+    public static String CAM_0_NAME = "camera_0";
+    public static String CAM_1_NAME = "camera_1";
 
     // Robot to camera transforms
     // (Not used by Limelight, configure in web UI instead)
