@@ -32,6 +32,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.units.measure.Angle;
+import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
@@ -263,16 +264,6 @@ public final class Constants {
             kInvertRightSide,
             kBackRightSteerMotorInverted,
             kBackRightCANcoderInverted);
-
-    // /**
-    //  * Creates a CommandSwerveDrivetrain instance.
-    //  * This should only be called once in your robot program,.
-    //  */
-    // public static CommandSwerveDrivetrain createDrivetrain() {
-    //     return new CommandSwerveDrivetrain(
-    //         DrivetrainConstants, FrontLeft, FrontRight, BackLeft, BackRight
-    //     );
-    // }
   }
 
   public class VisionConstants {
@@ -312,5 +303,40 @@ public final class Constants {
     public static double linearStdDevMegatag2Factor = 0.5; // More stable than full 3D solve
     public static double angularStdDevMegatag2Factor =
         Double.POSITIVE_INFINITY; // No rotation data available
+  }
+
+  public static class ShooterConstants {
+    public static final int SHOOTER_TOP_MOTOR_ID = 2;
+    public static final int SHOOTER_BOTTOM_MOTOR_ID = 3;
+
+    public static boolean IS_SHOOTING_RIGHT = false;
+
+    public static boolean HAS_STOPPED_REVVING = false;
+    public static boolean IS_AMP = false;
+
+    public static final double ShooterSpeed = 28.06308713961776; // in ft/s
+
+    public static final AngularVelocity SPK_TOP_RPM = RPM.of(3000);
+    public static final AngularVelocity SPK_BOTTOM_RPM = RPM.of(5000);
+
+    public static final AngularVelocity SHUTTLING_TOP_RPM = RPM.of(2900);
+    public static final AngularVelocity SHUTTLING_BOTTOM_RPM = RPM.of(2900);
+
+    public static final AngularVelocity AMP_TOP_RPM = RPM.of(-1200);
+    public static final AngularVelocity AMP_BOTTOM_RPM = RPM.of(-1200);
+
+    public static final AngularVelocity SHOOTER_OUTTAKE_RPM = RPM.of(1500);
+
+    public static final AngularVelocity SHOOTER_MAX_RPM = RPM.of(6784);
+
+    // TODO: tune further: get both faster
+    public static final double SHOOTER_kP = 0.0004;
+    public static final double SHOOTER_kI = 0.0;
+    public static final double SHOOTER_kD = 0.006;
+    public static final double SHOOTER_kFF = 0.000176;
+
+    public static final Current SHOOTER_STALL_LIMIT_CURRENT = Amps.of(60); // in amps
+    public static final Current SHOOTER_FREE_LIMIT_CURRENT = Amps.of(30); // in amps
+    public static final AngularVelocity SHOOTER_FREE_SPEED_LIMIT = RPM.of(5500); // in RPM
   }
 }

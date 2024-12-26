@@ -33,6 +33,10 @@ import frc.robot.subsystems.drive.gyro.GyroIOSim;
 import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFXSim;
+import frc.robot.subsystems.drive.shooter.Shooter;
+import frc.robot.subsystems.drive.shooter.ShooterIO;
+import frc.robot.subsystems.drive.shooter.ShooterIOSim;
+import frc.robot.subsystems.drive.shooter.ShooterIOSparkFlex;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
@@ -57,6 +61,7 @@ public class RobotContainer {
   private final Drive drive;
   private final Vision vision;
   private final Intake intake;
+  private final Shooter shooter;
 
   private SwerveDriveSimulation driveSimulation = null;
 
@@ -83,6 +88,7 @@ public class RobotContainer {
                 drive::addVisionMeasurement, new VisionIOLimelight(CAM_0_NAME, drive::getRotation));
 
         intake = new Intake(new IntakeIOTalonFX());
+        shooter = new Shooter(new ShooterIOSparkFlex());
         break;
 
       case SIM:
@@ -104,6 +110,7 @@ public class RobotContainer {
                     CAM_0_NAME, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose));
 
         intake = new Intake(new IntakeIOSim());
+        shooter = new Shooter(new ShooterIOSim());
         break;
 
       default:
@@ -118,6 +125,7 @@ public class RobotContainer {
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
 
         intake = new Intake(new IntakeIO() {});
+        shooter = new Shooter(new ShooterIO() {});
         break;
     }
 
@@ -159,36 +167,6 @@ public class RobotContainer {
             () -> -controller.getLeftX(),
             () -> -controller.getRightX()));
 
-    // Lock to 0° when A button is held
-    controller
-        .a()
-        .whileTrue(
-            DriveCommands.joystickDriveAtAngle(
-                drive,
-                () -> -controller.getLeftY(),
-                () -> -controller.getLeftX(),
-                () -> new Rotation2d()));
-
-    // Switch to X pattern when X button is pressed
-    controller.x().onTrue(Commands.runOnce(drive::stopWithX, drive));
-
-    // Reset gyro to 0° when B button is pressed
-    controller
-        .b()
-        .onTrue(
-            Commands.runOnce(
-                    () ->
-                        drive.setPose(
-                            new Pose2d(drive.getPose().getTranslation(), new Rotation2d())),
-                    drive)
-                .ignoringDisable(true));
-
-    // Center in-place on apriltag target
-    controller.y().whileTrue(DriveCommands.centerOnTarget(drive, vision));
-
-    controller.rightTrigger().whileTrue(intake.runIntake(false));
-    controller.leftTrigger().whileTrue(intake.runIntake(true));
-
     // Reset gyro / odometry
     final Runnable resetGyro =
         Constants.currentMode == Constants.Mode.SIM
@@ -200,7 +178,15 @@ public class RobotContainer {
             : () ->
                 drive.setPose(
                     new Pose2d(drive.getPose().getTranslation(), new Rotation2d())); // zero gyro
-    controller.start().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
+    controller.b().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
+
+    // Center in-place on apriltag target
+    controller.y().whileTrue(DriveCommands.centerOnTarget(drive, vision));
+
+    controller.rightTrigger().whileTrue(intake.runIntake(false));
+    controller.povRight().whileTrue(intake.runIntake(true));
+
+    controller.leftTrigger().whileTrue(shooter.shoot());
   }
 
   /**
