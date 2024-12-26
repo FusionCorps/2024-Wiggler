@@ -32,6 +32,10 @@ import frc.robot.subsystems.drive.gyro.GyroIOPigeon2;
 import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOSim;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFX;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
@@ -48,6 +52,7 @@ public class RobotContainer {
   // Subsystems
   private final Drive drive;
   private final Vision vision;
+  private final Intake intake;
 
   // Controller
   private final CommandXboxController controller = new CommandXboxController(0);
@@ -71,6 +76,8 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 new VisionIOLimelight(camera0Name, drive::getRotation));
+
+        intake = new Intake(new IntakeIOTalonFX());
         break;
 
       case SIM:
@@ -86,6 +93,8 @@ public class RobotContainer {
             new Vision(
                 drive::addVisionMeasurement,
                 new VisionIOPhotonVisionSim(camera0Name, robotToCamera0, drive::getPose));
+
+        intake = new Intake(new IntakeIOSim());
         break;
 
       default:
@@ -98,6 +107,8 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
+
+        intake = new Intake(new IntakeIO() {});
         break;
     }
 
@@ -165,6 +176,9 @@ public class RobotContainer {
 
     // Center in-place on apriltag target
     controller.y().whileTrue(DriveCommands.centerOnTarget(drive, vision));
+
+    controller.rightTrigger().whileTrue(intake.runIntake(false));
+    controller.leftTrigger().whileTrue(intake.runIntake(true));
   }
 
   /**

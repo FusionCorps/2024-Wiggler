@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.units.measure.Voltage;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface IntakeIO {
@@ -14,5 +15,5 @@ public interface IntakeIO {
 
   public default void updateInputs(IntakeIOInputs inputs) {}
 
-  public default void setOutputPercent(double output) {}
+  public default void setOutputVolts(Voltage volts) {}
 }
