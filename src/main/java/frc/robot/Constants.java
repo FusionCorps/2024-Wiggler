@@ -31,6 +31,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
@@ -38,6 +39,7 @@ import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotBase;
+import java.util.Map;
 
 /**
  * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when running
@@ -62,6 +64,8 @@ public final class Constants {
   public class IntakeConstants {
     public static final int INTAKE_MOTOR_ID = 6;
     public static final double INTAKE_OUTPUT_PERCENT = 0.8;
+
+    public static final int BEAM_BREAK_SENSOR_ID = 1;
   }
 
   public class DriveConstants {
@@ -338,5 +342,62 @@ public final class Constants {
     public static final Current SHOOTER_STALL_LIMIT_CURRENT = Amps.of(60); // in amps
     public static final Current SHOOTER_FREE_LIMIT_CURRENT = Amps.of(30); // in amps
     public static final AngularVelocity SHOOTER_FREE_SPEED_LIMIT = RPM.of(5500); // in RPM
+  }
+
+  public static class PivotConstants {
+    public static final double PIVOT_GEAR_RATIO = 31.25;
+
+    public static final double PIVOT_ERROR_THRESHOLD = 0.2;
+
+    public static final int PIVOT_MAIN_MOTOR_ID = 1;
+    public static final int PIVOT_FOLLOWER_MOTOR_ID = 5;
+
+    public static final double PIVOT_ARM_INIT_POSE = 37;
+
+    public static final double PIVOT_OFFSET = 0.307506;
+
+    public static final double PIVOT_kV = 0;
+    public static final double PIVOT_kP = 8;
+    public static final double PIVOT_kD = 0.01;
+    public static final double PIVOT_kI = 0;
+
+    // motion magic constraints
+    public static final double PIVOT_CRUISE_VELOCITY = 2500;
+    public static final double PIVOT_ACCELERATION = 2000;
+    public static final double PIVOT_JERK = 50000;
+
+    public static final Angle PIVOT_STOW_POS = Rotations.of(-22.5);
+    public static final Angle PIVOT_AMP_POS = Rotations.of(-99); // found via empirical testing
+
+    public static final Angle PIVOT_SUB_POS = Rotations.of(-5.0947265625);
+
+    public static final Angle PIVOT_SHUTTLING_POS = Rotations.of(-14.853271484375);
+
+    public static final Angle PIVOT_READY_CLIMB_POS = Rotations.of(-29.65771484375);
+
+    public static final Angle PIVOT_TRAP_POS = Rotations.of(-115);
+
+    // TODO: Change these values
+    public static final Angle PIVOT_CLIMB_UP_POS = Rotations.of(-49.61279296875);
+    public static final Angle PIVOT_CLIMB_DOWN_POS = Rotations.of(-14.5546875);
+
+    // maps Z distances to april tag (meters) with pivot angles (rotations)
+    public static final InterpolatingDoubleTreeMap PIVOT_ANGLES_MAP =
+        InterpolatingDoubleTreeMap.ofEntries(
+            Map.entry(1.1, PIVOT_SUB_POS.in(Rotations)),
+            Map.entry(1.43, 21.68115234375),
+            Map.entry(1.84, 16.1193359375),
+            Map.entry(2.31, 12.78369140625),
+            Map.entry(2.76, 10.56689453125),
+            Map.entry(2.82, 10.32265625),
+            Map.entry(3.02, 9.54326171875),
+            Map.entry(3.46, 8.09541015625),
+            Map.entry(4.00, 7.0));
+  }
+
+  public static class IndexConstants {
+    public static final int INDEX_MOTOR_ID = 4;
+    public static final double INDEX_RUN_PCT = .28;
+    public static final double INDEX_AMP_PCT = .30;
   }
 }

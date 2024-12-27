@@ -33,14 +33,26 @@ import frc.robot.subsystems.drive.gyro.GyroIOSim;
 import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFXSim;
-import frc.robot.subsystems.drive.shooter.Shooter;
-import frc.robot.subsystems.drive.shooter.ShooterIO;
-import frc.robot.subsystems.drive.shooter.ShooterIOSim;
-import frc.robot.subsystems.drive.shooter.ShooterIOSparkFlex;
+import frc.robot.subsystems.index.Index;
+import frc.robot.subsystems.index.Index.IndexState;
+import frc.robot.subsystems.index.IndexIO;
+import frc.robot.subsystems.index.IndexIOSim;
+import frc.robot.subsystems.index.IndexIOSparkFlex;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.Intake.IntakeState;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
+import frc.robot.subsystems.pivot.Pivot;
+import frc.robot.subsystems.pivot.Pivot.PivotState;
+import frc.robot.subsystems.pivot.PivotIO;
+import frc.robot.subsystems.pivot.PivotIOSim;
+import frc.robot.subsystems.pivot.PivotIOTalonFX;
+import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.Shooter.ShooterState;
+import frc.robot.subsystems.shooter.ShooterIO;
+import frc.robot.subsystems.shooter.ShooterIOSim;
+import frc.robot.subsystems.shooter.ShooterIOSparkFlex;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
@@ -62,6 +74,8 @@ public class RobotContainer {
   private final Vision vision;
   private final Intake intake;
   private final Shooter shooter;
+  private final Pivot pivot;
+  private final Index index;
 
   private SwerveDriveSimulation driveSimulation = null;
 
@@ -89,6 +103,8 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIOTalonFX());
         shooter = new Shooter(new ShooterIOSparkFlex());
+        pivot = new Pivot(new PivotIOTalonFX());
+        index = new Index(new IndexIOSparkFlex());
         break;
 
       case SIM:
@@ -111,6 +127,8 @@ public class RobotContainer {
 
         intake = new Intake(new IntakeIOSim());
         shooter = new Shooter(new ShooterIOSim());
+        pivot = new Pivot(new PivotIOSim());
+        index = new Index(new IndexIOSim());
         break;
 
       default:
@@ -123,9 +141,10 @@ public class RobotContainer {
                 new ModuleIO() {},
                 new ModuleIO() {});
         vision = new Vision(drive::addVisionMeasurement, new VisionIO() {});
-
         intake = new Intake(new IntakeIO() {});
         shooter = new Shooter(new ShooterIO() {});
+        pivot = new Pivot(new PivotIO() {});
+        index = new Index(new IndexIO() {});
         break;
     }
 
@@ -181,12 +200,45 @@ public class RobotContainer {
     controller.b().onTrue(Commands.runOnce(resetGyro, drive).ignoringDisable(true));
 
     // Center in-place on apriltag target
-    controller.y().whileTrue(DriveCommands.centerOnTarget(drive, vision));
+    controller.rightBumper().whileTrue(DriveCommands.centerOnTarget(drive, vision));
 
-    controller.rightTrigger().whileTrue(intake.runIntake(false));
-    controller.povRight().whileTrue(intake.runIntake(true));
+    // intake mechanism
+    controller
+        .rightTrigger()
+        .onTrue(
+            Commands.parallel(
+                shooter.setState(ShooterState.IDLE),
+                pivot.setState(PivotState.INTAKE),
+                intake.setState(IntakeState.INTAKE),
+                index.setState(IndexState.INTAKE)));
+    intake.noteInIntake.onTrue(
+        Commands.parallel(intake.setState(IntakeState.IDLE), index.setState(IndexState.IDLE)));
 
-    controller.leftTrigger().whileTrue(shooter.shoot());
+    // manual override pivot angle
+
+    // idle shooter
+    controller.y().onTrue(shooter.setState(ShooterState.IDLE));
+
+    // pivot positions
+    controller.a().onTrue(pivot.setState(PivotState.SUBWOOFER));
+    controller.leftBumper().onTrue(pivot.setState(PivotState.AMP));
+    controller.x().onTrue(pivot.setState(PivotState.SHUTTLE));
+
+    // hold to rev shooter, let go to shoot
+    controller
+        .leftTrigger()
+        .onTrue(shooter.setState(ShooterState.SPEAKER))
+        .onFalse(
+            index
+                .setState(IndexState.SHOOT)
+                .andThen(Commands.waitSeconds(2.0))
+                .andThen(
+                    index
+                        .setState(IndexState.IDLE)
+                        .alongWith(shooter.setState(ShooterState.IDLE))));
+
+    // controller.povLeft()
+    // controller.povRight()
   }
 
   /**

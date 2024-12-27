@@ -23,7 +23,7 @@ public class IntakeIOSim implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    inputs.connected = true;
+    inputs.intakeMotorConnected = true;
 
     // Update motor sim
     intakeMotorSim.setInputVoltage(MathUtil.clamp(appliedVolts.in(Volts), -12.0, 12.0));

@@ -1,4 +1,4 @@
-package frc.robot.subsystems.drive.shooter;
+package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
@@ -36,6 +36,9 @@ public class ShooterIOSparkFlex implements ShooterIO {
   private final SparkClosedLoopController topController = topShooter.getClosedLoopController();
   private final SparkClosedLoopController bottomController =
       bottomShooter.getClosedLoopController();
+
+  private double topTargetVelocity = 0;
+  private double bottomTargetVelocity = 0;
 
   public ShooterIOSparkFlex() {
     SparkFlexConfig topConfig = new SparkFlexConfig();
@@ -90,6 +93,7 @@ public class ShooterIOSparkFlex implements ShooterIO {
         topShooter::getOutputCurrent,
         current -> inputs.topShooterCurrentAmps = current);
     inputs.topConnected = topConnectedDebounce.calculate(!sparkStickyFault);
+    inputs.topShooterVelocityRadPerSec = topTargetVelocity;
 
     sparkStickyFault = false;
     ifOk(
@@ -109,11 +113,14 @@ public class ShooterIOSparkFlex implements ShooterIO {
         bottomShooter::getOutputCurrent,
         current -> inputs.bottomShooterCurrentAmps = current);
     inputs.bottomConnected = bottomConnectedDebounce.calculate(!sparkStickyFault);
+    inputs.bottomShooterVelocityRadPerSec = bottomTargetVelocity;
   }
 
   @Override
   public void setVelocity(AngularVelocity topVelocity, AngularVelocity bottomVelocity) {
-    topController.setReference(topVelocity.in(RadiansPerSecond), ControlType.kVelocity);
-    bottomController.setReference(bottomVelocity.in(RadiansPerSecond), ControlType.kVelocity);
+    topTargetVelocity = topVelocity.in(RadiansPerSecond);
+    bottomTargetVelocity = bottomVelocity.in(RadiansPerSecond);
+    topController.setReference(topTargetVelocity, ControlType.kVelocity);
+    bottomController.setReference(bottomTargetVelocity, ControlType.kVelocity);
   }
 }

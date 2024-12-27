@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Hertz;
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.Volts;
+import static frc.robot.Constants.IntakeConstants.*;
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
@@ -20,10 +21,11 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.Constants.IntakeConstants;
+import edu.wpi.first.wpilibj.DigitalInput;
 
 public class IntakeIOTalonFX implements IntakeIO {
-  TalonFX intakeMotor = new TalonFX(IntakeConstants.INTAKE_MOTOR_ID);
+  TalonFX intakeMotor = new TalonFX(INTAKE_MOTOR_ID);
+  DigitalInput beamBreakSensor;
 
   private final StatusSignal<Angle> intakePosition;
   private final StatusSignal<AngularVelocity> intakeVelocity;
@@ -35,6 +37,12 @@ public class IntakeIOTalonFX implements IntakeIO {
   private final VoltageOut intakeVoltageOut = new VoltageOut(0);
 
   public IntakeIOTalonFX() {
+    try {
+      beamBreakSensor = new DigitalInput(BEAM_BREAK_SENSOR_ID);
+    } catch (Exception e) {
+      beamBreakSensor = null;
+    }
+
     TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
     intakeConfig.MotorOutput.Inverted = InvertedValue.CounterClockwise_Positive;
     intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
@@ -58,11 +66,14 @@ public class IntakeIOTalonFX implements IntakeIO {
     var intakeStatus =
         BaseStatusSignal.refreshAll(
             intakePosition, intakeVelocity, intakeAppliedVoltage, intakeCurrent);
-    inputs.connected = intakeConnectedDebounce.calculate(intakeStatus.isOK());
+    inputs.intakeMotorConnected = intakeConnectedDebounce.calculate(intakeStatus.isOK());
     inputs.intakePositionRad = intakePosition.getValue().in(Radians);
     inputs.intakeVelocityRadPerSec = intakeVelocity.getValue().in(RadiansPerSecond);
     inputs.intakeAppliedVolts = intakeAppliedVoltage.getValue().in(Volts);
     inputs.intakeCurrentAmps = intakeCurrent.getValue().in(Amps);
+
+    inputs.beamBreakSensorConnected = beamBreakSensor != null;
+    inputs.noteInIntake = beamBreakSensor != null && !beamBreakSensor.get();
   }
 
   @Override
