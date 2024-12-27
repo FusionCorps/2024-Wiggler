@@ -1,37 +1,42 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Volts;
+
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.system.plant.LinearSystemId;
+import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 
 public class IntakeIOSim implements IntakeIO {
-  DCMotorSim intakeMotorSim = new DCMotorSim(DCMotor.getFalcon500(1), 1, 0.0001);
+  private DCMotorSim intakeMotorSim;
 
-  private double intakeAppliedVolts = 0.0;
-  PIDController intakeController = new PIDController(1.0, 0.0, 0.0);
-  SimpleMotorFeedforward intakeFeedforward = new SimpleMotorFeedforward(0.0, 0.0, 0.0);
+  private Voltage appliedVolts = Volts.of(0.0);
 
-  @Override
-  public void setIntakeVelocity(double velocityRadPerSec) {
-    intakeMotorSim.setInputVoltage(
-        intakeFeedforward.calculate(velocityRadPerSec)
-            + intakeController.calculate(
-                intakeMotorSim.getAngularVelocityRadPerSec(), velocityRadPerSec));
-  }
+  private final DCMotor INTAKE_GEARBOX = DCMotor.getKrakenX60(1);
 
-  @Override
-  public void setIntakeVoltage(double volts) {
-    intakeAppliedVolts = MathUtil.clamp(volts, -12.0, 12.0);
-    intakeMotorSim.setInputVoltage(volts);
+  public IntakeIOSim() {
+    intakeMotorSim =
+        new DCMotorSim(
+            LinearSystemId.createDCMotorSystem(INTAKE_GEARBOX, 0.001, 1.0), INTAKE_GEARBOX);
   }
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    inputs.intakeMotorConnected = true;
+
+    // Update motor sim
+    intakeMotorSim.setInputVoltage(MathUtil.clamp(appliedVolts.in(Volts), -12.0, 12.0));
     intakeMotorSim.update(0.02);
-    inputs.intakeAppliedVolts = intakeAppliedVolts;
-    inputs.intakePosRad = intakeMotorSim.getAngularPositionRad();
+
+    inputs.intakePositionRad = intakeMotorSim.getAngularPositionRad();
     inputs.intakeVelocityRadPerSec = intakeMotorSim.getAngularVelocityRadPerSec();
+    inputs.intakeAppliedVolts = appliedVolts.in(Volts);
+    inputs.intakeCurrentAmps = Math.abs(intakeMotorSim.getCurrentDrawAmps());
+  }
+
+  @Override
+  public void setOutputVolts(Voltage volts) {
+    appliedVolts = volts;
   }
 }
