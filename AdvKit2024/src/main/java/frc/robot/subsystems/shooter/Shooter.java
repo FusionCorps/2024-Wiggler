@@ -10,7 +10,6 @@ import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
@@ -32,12 +31,19 @@ public class Shooter extends SubsystemBase {
 
   @AutoLogOutput private ShooterState state = ShooterState.IDLE;
 
-  Trigger shooterAtSpeed = new Trigger(() -> {
-    return MathUtil.isNear(inputs.topVelocitySetpointRadPerSec, inputs.topShooterVelocityRadPerSec, RPM.of(500.0).in(RadiansPerSecond))
-        && MathUtil.isNear(inputs.bottomVelocitySetpointRadPerSec, inputs.bottomShooterVelocityRadPerSec, RPM.of(500.0).in(RadiansPerSecond));
-  });
+  Trigger shooterAtSpeed =
+      new Trigger(
+          () -> {
+            return MathUtil.isNear(
+                    inputs.topVelocitySetpointRadPerSec,
+                    inputs.topShooterVelocityRadPerSec,
+                    RPM.of(500.0).in(RadiansPerSecond))
+                && MathUtil.isNear(
+                    inputs.bottomVelocitySetpointRadPerSec,
+                    inputs.bottomShooterVelocityRadPerSec,
+                    RPM.of(500.0).in(RadiansPerSecond));
+          });
 
-  
   public Shooter(ShooterIO io) {
     this.io = io;
   }
@@ -54,6 +60,10 @@ public class Shooter extends SubsystemBase {
 
   public Command setState(ShooterState state) {
     return runOnce(() -> this.state = state);
+  }
+
+  public ShooterState getState() {
+    return state;
   }
 
   private Command manageVelocity() {

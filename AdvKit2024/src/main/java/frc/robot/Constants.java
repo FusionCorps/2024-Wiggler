@@ -75,23 +75,23 @@ public final class Constants {
     // output type specified by SwerveModuleConstants.SteerMotorClosedLoopOutput
     private static final Slot0Configs steerGains =
         new Slot0Configs()
-            .withKP(100)
+            .withKP(50)
             .withKI(0)
-            .withKD(0.2)
-            .withKS(0)
-            .withKV(1.5)
-            .withKA(0)
+            .withKD(0.0)
+            .withKS(0.03428)
+            .withKV(0.22857)
+            .withKA(0.0014722)
             .withStaticFeedforwardSign(StaticFeedforwardSignValue.UseClosedLoopSign);
     // When using closed-loop control, the drive motor uses the control
     // output type specified by SwerveModuleConstants.DriveMotorClosedLoopOutput
     private static final Slot0Configs driveGains =
         new Slot0Configs()
-            .withKP(0.17029)
+            .withKP(0.17527)
             .withKI(0)
             .withKD(0)
-            .withKS(0.06650)
-            .withKV(0.71338)
-            .withKA(0.077262);
+            .withKS(0.066052)
+            .withKV(0.11653)
+            .withKA(0.014691);
 
     // The closed-loop output type to use for the steer motors;
     // This affects the PID/FF gains for the steer motors
@@ -131,7 +131,7 @@ public final class Constants {
 
     // Theoretical free speed (m/s) at 12 V applied output;
     // This needs to be tuned to your individual robot
-    public static final LinearVelocity kSpeedAt12Volts = MetersPerSecond.of(6.21);
+    public static final LinearVelocity kSpeedAt12Volts = MetersPerSecond.of(7.0);
 
     // Every 1 rotation of the azimuth results in kCoupleRatio drive motor turns;
     // This may need to be tuned to your individual robot
@@ -352,14 +352,10 @@ public final class Constants {
     public static final int PIVOT_MAIN_MOTOR_ID = 1;
     public static final int PIVOT_FOLLOWER_MOTOR_ID = 5;
 
-    public static final double PIVOT_ARM_INIT_POSE = 37;
-
-    public static final double PIVOT_OFFSET = 0.307506;
-
-    public static final double PIVOT_kV = 0;
-    public static final double PIVOT_kP = 8;
-    public static final double PIVOT_kD = 0.01;
-    public static final double PIVOT_kI = 0;
+    public static final double PIVOT_kV = 9.0;
+    public static final double PIVOT_kP = 12.0;
+    public static final double PIVOT_kI = 4.0;
+    public static final double PIVOT_kD = 2.0;
 
     // motion magic constraints
     public static final double PIVOT_CRUISE_VELOCITY = 2500;

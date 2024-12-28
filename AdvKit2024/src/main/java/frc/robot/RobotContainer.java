@@ -125,8 +125,10 @@ public class RobotContainer {
                 new VisionIOPhotonVisionSim(
                     CAM_0_NAME, robotToCamera0, driveSimulation::getSimulatedDriveTrainPose));
 
-        intake = new Intake(new IntakeIOSim());
         shooter = new Shooter(new ShooterIOSim());
+        intake =
+            new Intake(
+                new IntakeIOSim(driveSimulation, () -> shooter.getState() != ShooterState.IDLE));
         pivot = new Pivot(new PivotIOSim());
         index = new Index(new IndexIOSim());
         break;
@@ -192,8 +194,7 @@ public class RobotContainer {
             ? () ->
                 drive.setPose(
                     driveSimulation
-                        .getSimulatedDriveTrainPose()) // reset odometry to actual robot pose during
-            // simulation
+                        .getSimulatedDriveTrainPose()) // reset to actual pose during simulation
             : () ->
                 drive.setPose(
                     new Pose2d(drive.getPose().getTranslation(), new Rotation2d())); // zero gyro
@@ -205,12 +206,14 @@ public class RobotContainer {
     // intake mechanism
     controller
         .rightTrigger()
-        .onTrue(
+        .whileTrue(
             Commands.parallel(
                 shooter.setState(ShooterState.IDLE),
                 pivot.setState(PivotState.INTAKE),
                 intake.setState(IntakeState.INTAKE),
-                index.setState(IndexState.INTAKE)));
+                index.setState(IndexState.INTAKE)))
+        .onFalse(
+            Commands.parallel(intake.setState(IntakeState.IDLE), index.setState(IndexState.IDLE)));
     intake.noteInIntake.onTrue(
         Commands.parallel(intake.setState(IntakeState.IDLE), index.setState(IndexState.IDLE)));
 
@@ -223,6 +226,13 @@ public class RobotContainer {
     controller.a().onTrue(pivot.setState(PivotState.SUBWOOFER));
     controller.leftBumper().onTrue(pivot.setState(PivotState.AMP));
     controller.x().onTrue(pivot.setState(PivotState.SHUTTLE));
+
+    controller
+        .start()
+        .onTrue(
+            Commands.runOnce(
+                () ->
+                    driveSimulation.setSimulationWorldPose(new Pose2d(3, 1.5, new Rotation2d()))));
 
     // hold to rev shooter, let go to shoot
     controller
@@ -253,7 +263,7 @@ public class RobotContainer {
   public void resetSimulationField() {
     if (Constants.currentMode != Constants.Mode.SIM) return;
 
-    driveSimulation.setSimulationWorldPose(new Pose2d(3, 1.5, new Rotation2d()));
+    // driveSimulation.setSimulationWorldPose(new Pose2d(3, 1.5, new Rotation2d()));
     SimulatedArena.getInstance().resetFieldForAuto();
   }
 

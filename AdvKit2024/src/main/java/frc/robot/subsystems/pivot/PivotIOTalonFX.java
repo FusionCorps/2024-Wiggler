@@ -62,7 +62,7 @@ public class PivotIOTalonFX implements PivotIO {
     pivotFollowerMotor.setControl(new Follower(PIVOT_MAIN_MOTOR_ID, false));
 
     pivotMainMotor.setPosition(0.0);
-    pivotFollowerMotor.setPosition(PIVOT_ARM_INIT_POSE);
+    pivotFollowerMotor.setPosition(0.0);
 
     pivotMainPosition = pivotMainMotor.getPosition();
     pivotMainVelocity = pivotMainMotor.getVelocity();
