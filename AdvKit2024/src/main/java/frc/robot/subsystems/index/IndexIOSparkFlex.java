@@ -23,6 +23,8 @@ public class IndexIOSparkFlex implements IndexIO {
 
   Debouncer indexMotorConnectedDebounce = new Debouncer(0.5);
 
+  private IndexState state = IndexState.IDLE;
+
   public IndexIOSparkFlex() {
     SparkFlexConfig config = new SparkFlexConfig();
     config
@@ -56,10 +58,16 @@ public class IndexIOSparkFlex implements IndexIO {
         indexMotor::getOutputCurrent,
         current -> inputs.indexMotorCurrentAmps = current);
     inputs.indexMotorConnected = indexMotorConnectedDebounce.calculate(!sparkStickyFault);
+    inputs.indexState = state;
   }
 
   @Override
   public void setOutputVolts(Voltage volts) {
     indexMotor.setVoltage(volts);
+  }
+
+  @Override
+  public void setIndexState(IndexState state) {
+    this.state = state;
   }
 }

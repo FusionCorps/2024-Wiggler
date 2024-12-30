@@ -24,7 +24,7 @@ public class PivotIOSim implements PivotIO {
   ArmFeedforward pivotFeedforward = new ArmFeedforward(0.0, 0.0, PIVOT_kV);
   PIDController pivotController = new PIDController(PIVOT_kP, PIVOT_kI, PIVOT_kD);
 
-  private final DCMotor PIVOT_GEARBOX = DCMotor.getKrakenX60(2);
+  private final DCMotor PIVOT_GEARBOX = DCMotor.getKrakenX60Foc(2);
 
   Angle pivotTargetPosition = Radians.of(0.0);
 
@@ -33,6 +33,7 @@ public class PivotIOSim implements PivotIO {
         new DCMotorSim(
             LinearSystemId.createDCMotorSystem(PIVOT_GEARBOX, 0.001, PIVOT_GEAR_RATIO),
             PIVOT_GEARBOX);
+    pivotSim.set
   }
 
   @Override

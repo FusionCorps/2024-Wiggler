@@ -1,8 +1,7 @@
 package frc.robot.subsystems.index;
 
 import static edu.wpi.first.units.Units.Volts;
-import static frc.robot.Constants.IndexConstants.INDEX_AMP_PCT;
-import static frc.robot.Constants.IndexConstants.INDEX_RUN_PCT;
+import static frc.robot.Constants.IndexConstants.*;
 
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
@@ -11,18 +10,8 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
 
 public class Index extends SubsystemBase {
-  public static enum IndexState {
-    IDLE,
-    SHOOT,
-    INTAKE,
-    EXTAKE,
-    AMP,
-  }
-
   private final IndexIO io;
   private final IndexIOInputsAutoLogged inputs = new IndexIOInputsAutoLogged();
-
-  private IndexState state = IndexState.IDLE;
 
   Alert indexMotorDisconnected = new Alert("Disconnected Index Motor.", AlertType.kError);
 
@@ -39,14 +28,14 @@ public class Index extends SubsystemBase {
     indexMotorDisconnected.set(!inputs.indexMotorConnected);
   }
 
-  public Command setState(IndexState state) {
-    return runOnce(() -> this.state = state);
+  public Command setVelocityState(IndexIO.IndexState state) {
+    return runOnce(() -> io.setIndexState(state));
   }
 
   private Command manageOutput() {
     return run(
         () -> {
-          switch (state) {
+          switch (inputs.indexState) {
             case IDLE:
               io.setOutputVolts(Volts.of(0.0));
               break;
@@ -61,6 +50,9 @@ public class Index extends SubsystemBase {
               break;
             case AMP:
               io.setOutputVolts(Volts.of(INDEX_AMP_PCT * 12.0));
+              break;
+            default:
+              setVelocityState(IndexIO.IndexState.IDLE);
               break;
           }
         });

@@ -26,9 +26,9 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.Timer;
 import java.util.function.Supplier;
-import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.motorsims.SimulatedBattery;
 import org.ironmaple.simulation.motorsims.SimulatedMotorController;
+import org.ironmaple.simulation.seasonspecific.crescendo2024.Arena2024Crescendo;
 
 public final class PhoenixUtil {
   /** Attempts to run the command until no error is produced. */
@@ -40,10 +40,11 @@ public final class PhoenixUtil {
   }
 
   public static double[] getSimulationOdometryTimeStamps() {
-    final double[] odometryTimeStamps = new double[SimulatedArena.getSimulationSubTicksIn1Period()];
+    final double[] odometryTimeStamps =
+        new double[Arena2024Crescendo.getSimulationSubTicksIn1Period()];
     for (int i = 0; i < odometryTimeStamps.length; i++) {
       odometryTimeStamps[i] =
-          Timer.getFPGATimestamp() - 0.02 + i * SimulatedArena.getSimulationDt().in(Seconds);
+          Timer.getFPGATimestamp() - 0.02 + i * Arena2024Crescendo.getSimulationDt().in(Seconds);
     }
 
     return odometryTimeStamps;

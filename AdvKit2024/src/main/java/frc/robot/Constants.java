@@ -318,7 +318,8 @@ public final class Constants {
     public static boolean HAS_STOPPED_REVVING = false;
     public static boolean IS_AMP = false;
 
-    public static final double ShooterSpeed = 28.06308713961776; // in ft/s
+    public static final LinearVelocity ShooterSpeed =
+        FeetPerSecond.of(28.06308713961776); // in ft/s
 
     public static final AngularVelocity SPK_TOP_RPM = RPM.of(3000);
     public static final AngularVelocity SPK_BOTTOM_RPM = RPM.of(5000);

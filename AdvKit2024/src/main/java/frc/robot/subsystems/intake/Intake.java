@@ -44,7 +44,7 @@ public class Intake extends SubsystemBase {
     beamBreakDisconnected.set(!inputs.beamBreakSensorConnected);
   }
 
-  public Command setState(IntakeState state) {
+  public Command setVelocityState(IntakeState state) {
     return runOnce(() -> this.state = state);
   }
 
@@ -60,6 +60,9 @@ public class Intake extends SubsystemBase {
               break;
             case EXTAKE:
               io.setOutputVolts(Volts.of(-INTAKE_OUTPUT_PERCENT * 12.0));
+              break;
+            default:
+              setVelocityState(IntakeState.IDLE);
               break;
           }
         });

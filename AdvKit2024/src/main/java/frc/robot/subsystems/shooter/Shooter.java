@@ -58,7 +58,7 @@ public class Shooter extends SubsystemBase {
     bottomShooterDisconnected.set(!inputs.bottomConnected);
   }
 
-  public Command setState(ShooterState state) {
+  public Command setVelocityState(ShooterState state) {
     return runOnce(() -> this.state = state);
   }
 
@@ -86,7 +86,7 @@ public class Shooter extends SubsystemBase {
               io.setVelocity(SHOOTER_OUTTAKE_RPM, SHOOTER_OUTTAKE_RPM);
               break;
             default:
-              io.setVelocity(RPM.of(0.0), RPM.of(0.0));
+              setVelocityState(ShooterState.IDLE);
               break;
           }
         });

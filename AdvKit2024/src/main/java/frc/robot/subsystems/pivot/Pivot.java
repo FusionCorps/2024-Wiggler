@@ -1,8 +1,10 @@
 package frc.robot.subsystems.pivot;
 
+import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.Constants.PivotConstants.*;
 
+import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -43,7 +45,7 @@ public class Pivot extends SubsystemBase {
     pivotFollowerDisconnected.set(!inputs.pivotFollowerConnected);
   }
 
-  public Command setState(PivotState state) {
+  public Command setPositionState(PivotState state) {
     return runOnce(() -> this.state = state);
   }
 
@@ -74,5 +76,9 @@ public class Pivot extends SubsystemBase {
               break;
           }
         });
+  }
+
+  public Angle getPivotAngle() {
+    return Radians.of(inputs.pivotMainPositionRad);
   }
 }

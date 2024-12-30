@@ -14,7 +14,7 @@ import org.ironmaple.simulation.drivesims.AbstractDriveTrainSimulation;
 
 public class IntakeIOSim implements IntakeIO {
   private DCMotorSim intakeMotorSim;
-  private final DCMotor INTAKE_GEARBOX = DCMotor.getKrakenX60(1);
+  private final DCMotor INTAKE_GEARBOX = DCMotor.getNeoVortex(1);
 
   private final IntakeSimulation intakePhysicsSim;
 

@@ -34,7 +34,6 @@ import frc.robot.subsystems.drive.module.ModuleIO;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.module.ModuleIOTalonFXSim;
 import frc.robot.subsystems.index.Index;
-import frc.robot.subsystems.index.Index.IndexState;
 import frc.robot.subsystems.index.IndexIO;
 import frc.robot.subsystems.index.IndexIOSim;
 import frc.robot.subsystems.index.IndexIOSparkFlex;
@@ -57,8 +56,8 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOLimelight;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
-import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
+import org.ironmaple.simulation.seasonspecific.crescendo2024.Arena2024Crescendo;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -111,7 +110,7 @@ public class RobotContainer {
         // Sim robot, instantiate physics sim IO implementations
         driveSimulation =
             new SwerveDriveSimulation(Drive.MAPLE_SIM_CONFIG, new Pose2d(3, 1.5, new Rotation2d()));
-        SimulatedArena.getInstance().addDriveTrainSimulation(driveSimulation);
+        Arena2024Crescendo.getInstance().addDriveTrainSimulation(driveSimulation);
         drive =
             new Drive(
                 new GyroIOSim(driveSimulation.getGyroSimulation()),
@@ -130,7 +129,14 @@ public class RobotContainer {
             new Intake(
                 new IntakeIOSim(driveSimulation, () -> shooter.getState() != ShooterState.IDLE));
         pivot = new Pivot(new PivotIOSim());
-        index = new Index(new IndexIOSim());
+        index =
+            new Index(
+                new IndexIOSim(
+                    intake.noteInIntake,
+                    driveSimulation::getSimulatedDriveTrainPose,
+                    drive::getChassisSpeeds,
+                    pivot::getPivotAngle,
+                    Arena2024Crescendo.getInstance()));
         break;
 
       default:
@@ -203,29 +209,34 @@ public class RobotContainer {
     // Center in-place on apriltag target
     controller.rightBumper().whileTrue(DriveCommands.centerOnTarget(drive, vision));
 
-    // intake mechanism
+    // run intake mechanism while held
     controller
         .rightTrigger()
         .whileTrue(
             Commands.parallel(
-                shooter.setState(ShooterState.IDLE),
-                pivot.setState(PivotState.INTAKE),
-                intake.setState(IntakeState.INTAKE),
-                index.setState(IndexState.INTAKE)))
+                shooter.setVelocityState(ShooterState.IDLE),
+                pivot.setPositionState(PivotState.INTAKE),
+                intake.setVelocityState(IntakeState.INTAKE),
+                index.setVelocityState(IndexIO.IndexState.INTAKE)))
         .onFalse(
-            Commands.parallel(intake.setState(IntakeState.IDLE), index.setState(IndexState.IDLE)));
+            Commands.parallel(
+                intake.setVelocityState(IntakeState.IDLE),
+                index.setVelocityState(IndexIO.IndexState.IDLE)));
+    // shut off intake mechanism when note enters intake
     intake.noteInIntake.onTrue(
-        Commands.parallel(intake.setState(IntakeState.IDLE), index.setState(IndexState.IDLE)));
+        Commands.parallel(
+            intake.setVelocityState(IntakeState.IDLE),
+            index.setVelocityState(IndexIO.IndexState.IDLE)));
 
     // manual override pivot angle
 
     // idle shooter
-    controller.y().onTrue(shooter.setState(ShooterState.IDLE));
+    controller.y().onTrue(shooter.setVelocityState(ShooterState.IDLE));
 
-    // pivot positions
-    controller.a().onTrue(pivot.setState(PivotState.SUBWOOFER));
-    controller.leftBumper().onTrue(pivot.setState(PivotState.AMP));
-    controller.x().onTrue(pivot.setState(PivotState.SHUTTLE));
+    // move to preset pivot positions
+    controller.a().onTrue(pivot.setPositionState(PivotState.SUBWOOFER));
+    controller.leftBumper().onTrue(pivot.setPositionState(PivotState.AMP));
+    controller.x().onTrue(pivot.setPositionState(PivotState.SHUTTLE));
 
     controller
         .start()
@@ -237,15 +248,15 @@ public class RobotContainer {
     // hold to rev shooter, let go to shoot
     controller
         .leftTrigger()
-        .onTrue(shooter.setState(ShooterState.SPEAKER))
+        .onTrue(shooter.setVelocityState(ShooterState.SPEAKER))
         .onFalse(
             index
-                .setState(IndexState.SHOOT)
-                .andThen(Commands.waitSeconds(2.0))
+                .setVelocityState(IndexIO.IndexState.SHOOT)
+                .andThen(Commands.waitSeconds(1.0)) // account for delays in shooting
                 .andThen(
                     index
-                        .setState(IndexState.IDLE)
-                        .alongWith(shooter.setState(ShooterState.IDLE))));
+                        .setVelocityState(IndexIO.IndexState.IDLE)
+                        .alongWith(shooter.setVelocityState(ShooterState.IDLE))));
 
     // controller.povLeft()
     // controller.povRight()
@@ -263,8 +274,9 @@ public class RobotContainer {
   public void resetSimulationField() {
     if (Constants.currentMode != Constants.Mode.SIM) return;
 
-    // driveSimulation.setSimulationWorldPose(new Pose2d(3, 1.5, new Rotation2d()));
-    SimulatedArena.getInstance().resetFieldForAuto();
+    driveSimulation.setSimulationWorldPose(new Pose2d(3, 1.5, new Rotation2d()));
+    System.out.println("Resetting simulation field");
+    Arena2024Crescendo.getInstance().resetFieldForAuto();
   }
 
   public void displaySimFieldToAdvantageScope() {
@@ -273,6 +285,6 @@ public class RobotContainer {
     Logger.recordOutput(
         "FieldSimulation/RobotPosition", driveSimulation.getSimulatedDriveTrainPose());
     Logger.recordOutput(
-        "FieldSimulation/Notes", SimulatedArena.getInstance().getGamePiecesArrayByType("Pose"));
+        "FieldSimulation/Notes", Arena2024Crescendo.getInstance().getGamePiecesArrayByType("Note"));
   }
 }
