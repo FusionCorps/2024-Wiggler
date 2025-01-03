@@ -15,18 +15,13 @@ package frc.robot.subsystems.drive;
 
 import static edu.wpi.first.units.Units.*;
 
+import choreo.trajectory.SwerveSample;
 import com.ctre.phoenix6.CANBus;
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.ModuleConfig;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import com.pathplanner.lib.pathfinding.Pathfinding;
-import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
 import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -38,14 +33,12 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
-import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
@@ -54,17 +47,13 @@ import frc.robot.subsystems.drive.gyro.GyroIO;
 import frc.robot.subsystems.drive.gyro.GyroIOInputsAutoLogged;
 import frc.robot.subsystems.drive.module.Module;
 import frc.robot.subsystems.drive.module.ModuleIO;
-import frc.robot.util.LocalADStarAK;
+import frc.robot.subsystems.vision.Vision.VisionConsumer;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.ironmaple.simulation.drivesims.COTS;
-import org.ironmaple.simulation.drivesims.SwerveModuleSimulation;
-import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
-import org.ironmaple.utils.FieldMirroringUtils;
 import org.littletonrobotics.junction.AutoLogOutput;
 import org.littletonrobotics.junction.Logger;
 
-public class Drive extends SubsystemBase {
+public class Drive extends SubsystemBase implements VisionConsumer {
   // TunerConstants doesn't include these constants, so they are declared locally
   public static final double ODOMETRY_FREQUENCY =
       new CANBus(DriveConstants.DrivetrainConstants.CANBusName).isNetworkFD() ? 250.0 : 100.0;
@@ -76,42 +65,6 @@ public class Drive extends SubsystemBase {
           Math.max(
               Math.hypot(DriveConstants.BackLeft.LocationX, DriveConstants.BackLeft.LocationY),
               Math.hypot(DriveConstants.BackRight.LocationX, DriveConstants.BackRight.LocationY)));
-
-  // PathPlanner config constants
-  private static final Mass ROBOT_MASS = Pounds.of(115.0);
-  private static final double ROBOT_MOI = 2.0; // TODO: find more accurate value
-  private static final double WHEEL_COF = 1.19;
-  private static final RobotConfig PP_CONFIG =
-      new RobotConfig(
-          ROBOT_MASS.in(Kilograms),
-          ROBOT_MOI,
-          new ModuleConfig(
-              DriveConstants.FrontLeft.WheelRadius,
-              DriveConstants.kSpeedAt12Volts.in(MetersPerSecond),
-              WHEEL_COF,
-              DCMotor.getKrakenX60Foc(1)
-                  .withReduction(DriveConstants.FrontLeft.DriveMotorGearRatio),
-              DriveConstants.FrontLeft.SlipCurrent,
-              1),
-          getModuleTranslations());
-
-  public static final DriveTrainSimulationConfig MAPLE_SIM_CONFIG =
-      DriveTrainSimulationConfig.Default()
-          .withRobotMass(ROBOT_MASS)
-          .withCustomModuleTranslations(getModuleTranslations())
-          .withGyro(COTS.ofPigeon2())
-          .withSwerveModule(
-              () ->
-                  new SwerveModuleSimulation(
-                      DCMotor.getKrakenX60(1),
-                      DCMotor.getFalcon500(1),
-                      DriveConstants.FrontLeft.DriveMotorGearRatio,
-                      DriveConstants.FrontLeft.SteerMotorGearRatio,
-                      Volts.of(DriveConstants.FrontLeft.DriveFrictionVoltage),
-                      Volts.of(DriveConstants.FrontLeft.SteerFrictionVoltage),
-                      Meters.of(DriveConstants.FrontLeft.WheelRadius),
-                      KilogramSquareMeters.of(DriveConstants.FrontLeft.SteerInertia),
-                      WHEEL_COF));
 
   static final Lock odometryLock = new ReentrantLock();
   private final GyroIO gyroIO;
@@ -133,6 +86,13 @@ public class Drive extends SubsystemBase {
   private SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(kinematics, rawGyroRotation, lastModulePositions, new Pose2d());
 
+  private final PIDController xControllerAuto = new PIDController(10.0, 0.0, 0.0);
+  private final PIDController yControllerAuto = new PIDController(10.0, 0.0, 0.0);
+  private final PIDController headingControllerAuto = new PIDController(7.5, 0.0, 0.0);
+
+  public boolean isAiming = false;
+  public Trigger isAimingTrigger;
+
   public Drive(
       GyroIO gyroIO,
       ModuleIO flModuleIO,
@@ -151,38 +111,36 @@ public class Drive extends SubsystemBase {
     // Start odometry thread
     PhoenixOdometryThread.getInstance().start();
 
-    // Configure AutoBuilder for PathPlanner
-    AutoBuilder.configure(
-        this::getPose,
-        this::setPose,
-        this::getChassisSpeeds,
-        this::runVelocity,
-        new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0.0, 0.0), new PIDConstants(5.0, 0.0, 0.0)),
-        PP_CONFIG,
-        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
-        this);
-    Pathfinding.setPathfinder(new LocalADStarAK());
-    PathPlannerLogging.setLogActivePathCallback(
-        (activePath) -> {
-          Logger.recordOutput(
-              "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
-        });
-    PathPlannerLogging.setLogTargetPoseCallback(
-        (targetPose) -> {
-          Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
-        });
+    headingControllerAuto.enableContinuousInput(-Math.PI, Math.PI);
 
     // Configure SysId
     sysId =
         new SysIdRoutine(
             new SysIdRoutine.Config(
-                null,
-                Volts.of(3.0),
+                Volts.of(0.5).per(Second),
+                Volts.of(1.0),
                 Seconds.of(7.0),
                 (state) -> Logger.recordOutput("Drive/SysIdState", state.toString())),
             new SysIdRoutine.Mechanism(
                 (voltage) -> runCharacterization(voltage.in(Volts)), null, this));
+
+    // isAimingTrigger =
+    //     new Trigger(
+    //         () ->
+    //             isAiming
+    //                 && MathUtil.isNear(
+    //                     this.getPose()
+    //                         .getTranslation()
+    //                         .minus(
+    //                             APRILTAG_LAYOUT
+    //                                 .getTagPose(FieldMirroringUtils.isSidePresentedAsRed() ? 4 :
+    // 7)
+    //                                 .get()
+    //                                 .toPose2d()
+    //                                 .getTranslation())
+    //                         .getAngle(),
+    //                     getPose().getRotation().getRadians(),
+    //                     0.1));
   }
 
   @Override
@@ -207,7 +165,6 @@ public class Drive extends SubsystemBase {
       Logger.recordOutput("SwerveStates/Setpoints", new SwerveModuleState[] {});
       Logger.recordOutput("SwerveStates/SetpointsOptimized", new SwerveModuleState[] {});
     }
-
     // Update odometry
     double[] sampleTimestamps =
         modules[0].getOdometryTimestamps(); // All signals are sampled together
@@ -365,7 +322,8 @@ public class Drive extends SubsystemBase {
   }
 
   /** Adds a new timestamped vision measurement. */
-  public void addVisionMeasurement(
+  @Override
+  public void accept(
       Pose2d visionRobotPoseMeters,
       double timestampSeconds,
       Matrix<N3, N1> visionMeasurementStdDevs) {
@@ -393,13 +351,19 @@ public class Drive extends SubsystemBase {
     };
   }
 
-  @AutoLogOutput(key = "Odometry/DistanceToSpeaker")
-  public double getDistanceToSpeaker() {
-    return getPose()
-        .getTranslation()
-        .minus(
-            FieldMirroringUtils.toCurrentAllianceTranslation(FieldMirroringUtils.SPEAKER_POSE_BLUE)
-                .toTranslation2d())
-        .getNorm();
+  public void followTrajectory(SwerveSample sample) {
+    // Get the current pose of the robot
+    Pose2d pose = getPose();
+
+    // Generate the next speeds for the robot
+    ChassisSpeeds speeds =
+        new ChassisSpeeds(
+            sample.vx + xControllerAuto.calculate(pose.getX(), sample.x),
+            sample.vy + yControllerAuto.calculate(pose.getY(), sample.y),
+            sample.omega
+                + headingControllerAuto.calculate(pose.getRotation().getRadians(), sample.heading));
+
+    // Apply the generated speeds
+    runVelocity(speeds);
   }
 }

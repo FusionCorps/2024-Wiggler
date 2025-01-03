@@ -37,6 +37,13 @@ public class IntakeIOSim implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    appliedVolts = Volts.of(inputs.intakeState.pct * 12.0);
+    if (appliedVolts.equals(Volts.of(0.0))) {
+      intakePhysicsSim.stopIntake();
+    } else {
+      intakePhysicsSim.startIntake();
+    }
+
     inputs.intakeMotorConnected = true;
 
     // Update motor sim
@@ -54,16 +61,6 @@ public class IntakeIOSim implements IntakeIO {
 
     if (isShooting.getAsBoolean()) {
       intakePhysicsSim.obtainGamePieceFromIntake();
-    }
-  }
-
-  @Override
-  public void setOutputVolts(Voltage volts) {
-    appliedVolts = volts;
-    if (volts.equals(Volts.of(0.0))) {
-      intakePhysicsSim.stopIntake();
-    } else {
-      intakePhysicsSim.startIntake();
     }
   }
 

@@ -26,7 +26,6 @@ import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
-import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.drive.Drive;
 
@@ -92,8 +91,6 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
     var turnConfig = new TalonFXConfiguration();
     turnConfig.MotorOutput.NeutralMode = NeutralModeValue.Brake;
     turnConfig.Slot0 = constants.SteerMotorGains;
-    if (Constants.currentMode == Constants.Mode.SIM)
-      turnConfig.Slot0.withKD(0.5).withKS(0); // during simulation, gains are slightly different
 
     turnConfig.Feedback.FeedbackRemoteSensorID = constants.CANcoderId;
     turnConfig.Feedback.FeedbackSensorSource =
@@ -163,15 +160,17 @@ public abstract class ModuleIOTalonFX implements ModuleIO {
 
     // Update drive inputs
     inputs.driveConnected = driveConnectedDebounce.calculate(driveStatus.isOK());
-    inputs.drivePositionRad = drivePosition.getValue().in(Radians);
-    inputs.driveVelocityRadPerSec = driveVelocity.getValue().in(RadiansPerSecond);
+    inputs.drivePositionRad = drivePosition.getValue().in(Radians) / constants.DriveMotorGearRatio;
+    inputs.driveVelocityRadPerSec =
+        driveVelocity.getValue().in(RadiansPerSecond) / constants.DriveMotorGearRatio;
     inputs.driveAppliedVolts = driveAppliedVolts.getValue().in(Volts);
     inputs.driveCurrentAmps = driveCurrent.getValue().in(Amps);
 
     // Update turn inputs
     inputs.turnConnected = turnConnectedDebounce.calculate(turnStatus.isOK());
     inputs.turnEncoderConnected = turnEncoderConnectedDebounce.calculate(turnEncoderStatus.isOK());
-    inputs.turnPosition = new Rotation2d(turnPosition.getValue());
+    inputs.turnPosition =
+        new Rotation2d(turnPosition.getValue().in(Radians) / constants.SteerMotorGearRatio);
     inputs.turnAbsolutePosition = new Rotation2d(turnAbsolutePosition.getValue());
     inputs.turnVelocityRadPerSec = turnVelocity.getValue().in(RadiansPerSecond);
     inputs.turnAppliedVolts = turnAppliedVolts.getValue().in(Volts);

@@ -12,6 +12,7 @@ import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
 import frc.robot.Constants.ShooterConstants;
+import frc.robot.Constants.ShooterConstants.ShooterState;
 
 public class ShooterIOSim implements ShooterIO {
   DCMotorSim topShooterSim, bottomShooterSim;
@@ -27,6 +28,8 @@ public class ShooterIOSim implements ShooterIO {
   private SimpleMotorFeedforward bottomFeedforward = new SimpleMotorFeedforward(0.0, 0.017);
 
   private ShooterConstants.ShooterState state = ShooterConstants.ShooterState.IDLE;
+  Voltage voltsToApplyTop = Volts.of(0);
+  Voltage voltsToApplyBottom = Volts.of(0);
 
   public ShooterIOSim() {
     topShooterSim =
@@ -39,24 +42,33 @@ public class ShooterIOSim implements ShooterIO {
 
   @Override
   public void updateInputs(ShooterIOInputs inputs) {
-    Voltage voltsToApplyTop =
-        Volts.of(
-            MathUtil.clamp(
-                topController.calculate(
-                        topShooterSim.getAngularVelocityRadPerSec(),
-                        topTargetVelocity.in(RadiansPerSecond))
-                    + topFeedforward.calculate(topTargetVelocity.in(RadiansPerSecond)),
-                -12.0,
-                12.0));
-    Voltage voltsToApplyBottom =
-        Volts.of(
-            MathUtil.clamp(
-                bottomController.calculate(
-                        bottomShooterSim.getAngularVelocityRadPerSec(),
-                        bottomTargetVelocity.in(RadiansPerSecond))
-                    + bottomFeedforward.calculate(bottomTargetVelocity.in(RadiansPerSecond)),
-                -12.0,
-                12.0));
+    topTargetVelocity = inputs.shooterState.topRPM;
+    bottomTargetVelocity = inputs.shooterState.bottomRPM;
+
+    if (state == ShooterState.IDLE) {
+      voltsToApplyTop = Volts.zero();
+      voltsToApplyBottom = Volts.zero();
+    } else {
+      voltsToApplyTop =
+          Volts.of(
+              MathUtil.clamp(
+                  topController.calculate(
+                          topShooterSim.getAngularVelocityRadPerSec(),
+                          topTargetVelocity.in(RadiansPerSecond))
+                      + topFeedforward.calculate(topTargetVelocity.in(RadiansPerSecond)),
+                  -12.0,
+                  12.0));
+
+      voltsToApplyBottom =
+          Volts.of(
+              MathUtil.clamp(
+                  bottomController.calculate(
+                          bottomShooterSim.getAngularVelocityRadPerSec(),
+                          bottomTargetVelocity.in(RadiansPerSecond))
+                      + bottomFeedforward.calculate(bottomTargetVelocity.in(RadiansPerSecond)),
+                  -12.0,
+                  12.0));
+    }
 
     topShooterSim.setInputVoltage(voltsToApplyTop.in(Volts));
     bottomShooterSim.setInputVoltage(voltsToApplyBottom.in(Volts));
@@ -79,12 +91,6 @@ public class ShooterIOSim implements ShooterIO {
     inputs.bottomVelocitySetpointRadPerSec = bottomTargetVelocity.in(RadiansPerSecond);
 
     inputs.shooterState = state;
-  }
-
-  @Override
-  public void setVelocity(AngularVelocity topVelocity, AngularVelocity bottomVelocity) {
-    topTargetVelocity = topVelocity;
-    bottomTargetVelocity = bottomVelocity;
   }
 
   @Override

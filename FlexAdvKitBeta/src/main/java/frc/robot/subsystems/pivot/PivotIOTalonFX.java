@@ -16,6 +16,7 @@ import com.ctre.phoenix6.controls.Follower;
 import com.ctre.phoenix6.controls.MotionMagicVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.filter.Debouncer;
@@ -44,7 +45,8 @@ public class PivotIOTalonFX implements PivotIO {
 
   private final MotionMagicVoltage pivotMotionMagicPositionRequest = new MotionMagicVoltage(0);
 
-  private PivotState state = PivotState.SUBWOOFER;
+  private Angle pivotTargetPosition = Radians.of(0.0);
+  private PivotState state = PivotState.INTAKE;
 
   public PivotIOTalonFX() {
     TalonFXConfiguration pivotConfig = new TalonFXConfiguration();
@@ -55,6 +57,8 @@ public class PivotIOTalonFX implements PivotIO {
     pivotConfig.Slot0.kP = PIVOT_kP;
     pivotConfig.Slot0.kI = PIVOT_kI;
     pivotConfig.Slot0.kD = PIVOT_kD;
+    pivotConfig.Slot0.GravityType = GravityTypeValue.Arm_Cosine;
+    pivotConfig.Slot0.kG = PIVOT_kG;
 
     pivotConfig.MotionMagic.MotionMagicCruiseVelocity = PIVOT_CRUISE_VELOCITY;
     pivotConfig.MotionMagic.MotionMagicAcceleration = PIVOT_ACCELERATION;
@@ -64,8 +68,9 @@ public class PivotIOTalonFX implements PivotIO {
     tryUntilOk(5, () -> pivotFollowerMotor.getConfigurator().apply(pivotConfig, 0.25));
     pivotFollowerMotor.setControl(new Follower(PIVOT_MAIN_MOTOR_ID, false));
 
-    pivotMainMotor.setPosition(0.0);
-    pivotFollowerMotor.setPosition(0.0);
+    // don't do this, because it will mess up pivot position on second deploy if not rebooted
+    // pivotMainMotor.setPosition(0.0);
+    // pivotFollowerMotor.setPosition(0.0);
 
     pivotMainPosition = pivotMainMotor.getPosition();
     pivotMainVelocity = pivotMainMotor.getVelocity();
@@ -92,6 +97,12 @@ public class PivotIOTalonFX implements PivotIO {
 
   @Override
   public void updateInputs(PivotIOInputs inputs) {
+    if (state != PivotState.MANUAL_OVERRIDE && state != PivotState.AIMING)
+      pivotTargetPosition = state.angle;
+
+    if (state != PivotState.MANUAL_OVERRIDE)
+      pivotMainMotor.setControl(pivotMotionMagicPositionRequest.withPosition(pivotTargetPosition));
+
     StatusCode pivotMainStatus =
         BaseStatusSignal.refreshAll(
             pivotMainPosition, pivotMainVelocity, pivotMainAppliedVoltage, pivotMainCurrent);
@@ -114,50 +125,20 @@ public class PivotIOTalonFX implements PivotIO {
     inputs.pivotFollowerAppliedVolts = pivotFollowerAppliedVoltage.getValue().in(Volts);
     inputs.pivotFollowerCurrentAmps = pivotFollowerCurrent.getValue().in(Amps);
 
-    inputs.pivotPositionSetpointRad =
-        pivotMotionMagicPositionRequest.getPositionMeasure().in(Radians);
+    inputs.pivotPositionSetpointRad = pivotTargetPosition.in(Radians);
     inputs.pivotState = state;
   }
 
   @Override
-  public void managePosition() {
-    Angle pivotTargetPosition = PIVOT_STOW_POS_REAL;
-    switch (state) {
-      case INTAKE:
-        pivotTargetPosition = PIVOT_STOW_POS_REAL;
-        break;
-      case EXTAKE:
-        pivotTargetPosition = PIVOT_STOW_POS_REAL;
-        break;
-      case SUBWOOFER:
-        pivotTargetPosition = PIVOT_SUB_POS_REAL;
-        break;
-      case AMP:
-        pivotTargetPosition = PIVOT_AMP_POS_REAL;
-        break;
-      case SHUTTLE:
-        pivotTargetPosition = PIVOT_SHUTTLING_POS_REAL;
-        break;
-      case AIMING:
-        return; // don't set closed-loop position, is controlled externally by vision output
-      case MANUAL_OVERRIDE:
-        return; // don't set closed-loop position
-    }
-    pivotMainMotor.setControl(pivotMotionMagicPositionRequest.withPosition(pivotTargetPosition));
-  }
-
-  @Override
-  public void setPivotState(PivotState state) {
+  public void setState(PivotState state) {
     this.state = state;
   }
 
   @Override
-  public void setPivotPct(double pct) {
+  public void setPct(double pct) {
     pivotMainMotor.set(pct);
   }
 
   @Override
-  public void setPivotPosition(Angle position) {
-    pivotMainMotor.setControl(pivotMotionMagicPositionRequest.withPosition(position));
-  }
+  public void setTargetPosition(Angle position) {}
 }

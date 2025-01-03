@@ -25,11 +25,9 @@ public interface PivotIO {
 
   public default void updateInputs(PivotIOInputs inputs) {}
 
-  public default void managePosition() {}
+  public default void setState(PivotState state) {}
 
-  public default void setPivotState(PivotState state) {}
+  public default void setPct(double pct) {}
 
-  public default void setPivotPct(double pct) {}
-
-  public default void setPivotPosition(Angle position) {}
+  public default void setTargetPosition(Angle position) {}
 }

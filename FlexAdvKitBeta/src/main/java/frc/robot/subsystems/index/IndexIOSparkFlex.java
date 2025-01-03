@@ -13,8 +13,8 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.RobotController;
+import frc.robot.Constants.IndexConstants.IndexState;
 import java.util.function.DoubleSupplier;
 
 public class IndexIOSparkFlex implements IndexIO {
@@ -30,7 +30,8 @@ public class IndexIOSparkFlex implements IndexIO {
     config
         .inverted(false)
         .idleMode(IdleMode.kBrake)
-        .voltageCompensation(RobotController.getBatteryVoltage());
+        .voltageCompensation(RobotController.getBatteryVoltage())
+        .smartCurrentLimit(20);
 
     tryUntilOk(
         indexMotor,
@@ -42,6 +43,8 @@ public class IndexIOSparkFlex implements IndexIO {
 
   @Override
   public void updateInputs(IndexIOInputs inputs) {
+    indexMotor.setVoltage(inputs.indexState.pct * 12.0);
+
     sparkStickyFault = false;
     ifOk(indexMotor, indexEncoder::getPosition, position -> inputs.indexPositionRad = position);
     ifOk(
@@ -55,11 +58,6 @@ public class IndexIOSparkFlex implements IndexIO {
     ifOk(indexMotor, indexMotor::getOutputCurrent, current -> inputs.indexCurrentAmps = current);
     inputs.indexMotorConnected = indexMotorConnectedDebounce.calculate(!sparkStickyFault);
     inputs.indexState = state;
-  }
-
-  @Override
-  public void setOutputVolts(Voltage volts) {
-    indexMotor.setVoltage(volts);
   }
 
   @Override

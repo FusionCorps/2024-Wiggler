@@ -65,6 +65,8 @@ public class IntakeIOTalonFX implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    intakeMotor.setControl(intakeVoltageOut.withOutput(Volts.of(state.pct * 12.0)));
+
     var intakeStatus =
         BaseStatusSignal.refreshAll(
             intakePosition, intakeVelocity, intakeAppliedVoltage, intakeCurrent);
@@ -78,11 +80,6 @@ public class IntakeIOTalonFX implements IntakeIO {
     inputs.noteInIntake = beamBreakSensor != null && !beamBreakSensor.get();
 
     inputs.intakeState = state;
-  }
-
-  @Override
-  public void setOutputVolts(Voltage volts) {
-    intakeMotor.setControl(intakeVoltageOut.withOutput(volts.in(Volts)));
   }
 
   @Override

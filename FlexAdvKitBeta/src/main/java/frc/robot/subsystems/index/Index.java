@@ -1,6 +1,5 @@
 package frc.robot.subsystems.index;
 
-import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.Constants.IndexConstants.*;
 
 import edu.wpi.first.wpilibj.Alert;
@@ -23,63 +22,18 @@ public class Index extends SubsystemBase {
 
   @Override
   public void periodic() {
-    setDefaultCommand(manageOutput());
     io.updateInputs(inputs);
     Logger.processInputs("Index", inputs);
 
     indexMotorDisconnected.set(!inputs.indexMotorConnected);
   }
 
-  /**
-   * Instant Command: Gets the current index state.
-   *
-   * @return {@link IndexState}
-   */
   public IndexState getIndexState() {
     return inputs.indexState;
   }
 
-  /**
-   * Instant Command: Sets the index velocity to a specific state.
-   *
-   * @param state - the {@link IndexState} to set the index to
-   * @return {@link Command}
-   */
-  public Command setVelocityState(IndexState state) {
+  public Command setState(IndexState state) {
     return runOnce(() -> io.setIndexState(state));
-  }
-
-  /**
-   * Continuous Command: Sets the index velocity to a specific voltage.
-   *
-   * <p>Default command for the index.
-   *
-   * @return {@link Command}
-   */
-  private Command manageOutput() {
-    return run(
-        () -> {
-          switch (inputs.indexState) {
-            case IDLE:
-              io.setOutputVolts(Volts.of(0.0));
-              break;
-            case SPEAKER:
-              io.setOutputVolts(Volts.of(INDEX_RUN_PCT * 12.0));
-              break;
-            case INTAKE:
-              io.setOutputVolts(Volts.of(INDEX_RUN_PCT * 12.0));
-              break;
-            case EXTAKE:
-              io.setOutputVolts(Volts.of(-INDEX_RUN_PCT * 12.0));
-              break;
-            case AMP:
-              io.setOutputVolts(Volts.of(INDEX_AMP_PCT * 12.0));
-              break;
-            default:
-              setVelocityState(IndexState.IDLE);
-              break;
-          }
-        });
   }
 
   /**

@@ -33,7 +33,7 @@ public class IndexIOSim implements IndexIO {
 
   private NoteOnFly noteOnFly;
 
-  private final Supplier<Pose2d> robotSimulationWorldPose;
+  private final Supplier<Pose2d> robotPose;
   private final Supplier<ChassisSpeeds> chassisSpeedsFieldRelative;
   private double velocityRPM;
   private final Supplier<Angle> pivotAngle;
@@ -42,7 +42,7 @@ public class IndexIOSim implements IndexIO {
   private IndexState state = IndexState.IDLE;
 
   public IndexIOSim(
-      Supplier<Pose2d> robotSimulationWorldPose,
+      Supplier<Pose2d> robotPose,
       Supplier<ChassisSpeeds> chassisSpeedsFieldRelative,
       Supplier<Angle> pivotAngle,
       SimulatedArena simulatedArena) {
@@ -52,7 +52,7 @@ public class IndexIOSim implements IndexIO {
 
     this.noteInIntake = null;
 
-    this.robotSimulationWorldPose = robotSimulationWorldPose;
+    this.robotPose = robotPose;
     this.chassisSpeedsFieldRelative = chassisSpeedsFieldRelative;
     this.pivotAngle = pivotAngle;
     this.simulatedArena = simulatedArena;
@@ -64,11 +64,10 @@ public class IndexIOSim implements IndexIO {
 
   @Override
   public void updateInputs(IndexIOInputs inputs) {
-    inputs.indexMotorConnected = true;
-
-    indexMotorSim.setInputVoltage(MathUtil.clamp(voltsToApply.in(Volts), -12.0, 12.0));
+    indexMotorSim.setInputVoltage(MathUtil.clamp((inputs.indexState.pct * 12.0), -12.0, 12.0));
     indexMotorSim.update(0.02);
 
+    inputs.indexMotorConnected = true;
     inputs.indexPositionRad = indexMotorSim.getAngularPositionRad();
     inputs.indexVelocityRadPerSec = indexMotorSim.getAngularVelocityRadPerSec();
     inputs.indexAppliedVolts = voltsToApply.in(Volts);
@@ -80,11 +79,6 @@ public class IndexIOSim implements IndexIO {
     }
   }
 
-  @Override
-  public void setOutputVolts(Voltage volts) {
-    voltsToApply = volts;
-  }
-
   public void launchNoteWithTrajectory() {
     if (state == SPEAKER) velocityRPM = 6000;
     else if (state == EXTAKE) velocityRPM = 500;
@@ -92,15 +86,15 @@ public class IndexIOSim implements IndexIO {
     noteOnFly =
         new NoteOnFly(
             // Specify the position of the chassis when the note is launched
-            robotSimulationWorldPose.get().getTranslation(),
+            robotPose.get().getTranslation(),
             // Specify the translation of the shooter from the robot center (in the shooter’s
             // reference frame)
             new Translation2d(0.2, 0),
             // Specify the field-relative speed of the chassis, adding it to the initial velocity of
             // the projectile
             chassisSpeedsFieldRelative.get(),
-            // The shooter facing direction is the same as the robot’s facing direction
-            robotSimulationWorldPose.get().getRotation().plus(Rotation2d.k180deg),
+            // The shooter facing direction is opposite the robot’s facing direction
+            robotPose.get().getRotation().plus(Rotation2d.k180deg),
             // Initial height of the flying note
             0.7,
             // The launch speed is proportional to the RPM; assumed to be 16 meters/second at 6000

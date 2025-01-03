@@ -1,6 +1,5 @@
 package frc.robot.subsystems.index;
 
-import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.IndexConstants.IndexState;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -16,8 +15,6 @@ public interface IndexIO {
   }
 
   public default void updateInputs(IndexIOInputs inputs) {}
-
-  public default void setOutputVolts(Voltage volts) {}
 
   public default void setIndexState(IndexState state) {}
 }

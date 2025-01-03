@@ -1,6 +1,5 @@
 package frc.robot.subsystems.shooter;
 
-import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Constants.ShooterConstants;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -25,8 +24,6 @@ public interface ShooterIO {
   }
 
   public default void updateInputs(ShooterIOInputs inputs) {}
-
-  public default void setVelocity(AngularVelocity topVelocity, AngularVelocity bottomVelocity) {}
 
   public default void setShooterState(ShooterConstants.ShooterState state) {}
 }

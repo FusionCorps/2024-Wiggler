@@ -13,8 +13,8 @@
 
 package frc.robot.commands;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
+import static frc.robot.Constants.VisionConstants.APRILTAG_LAYOUT;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
@@ -163,23 +163,23 @@ public class DriveCommands {
 
   public static Command centerOnSpeakerTag(
       Drive drive, DoubleSupplier xSupplier, DoubleSupplier ySupplier) {
-    AprilTagFieldLayout fieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2024Crescendo);
-
-    return joystickDriveAtAngle(
-        drive,
-        xSupplier,
-        ySupplier,
-        () ->
-            drive
-                .getPose()
-                .getTranslation()
-                .minus(
-                    fieldLayout
-                        .getTagPose(FieldMirroringUtils.isSidePresentedAsRed() ? 4 : 7)
-                        .get()
-                        .toPose2d()
-                        .getTranslation())
-                .getAngle());
+    return Commands.runOnce(() -> drive.isAiming = true)
+        .andThen(
+            joystickDriveAtAngle(
+                drive,
+                xSupplier,
+                ySupplier,
+                () ->
+                    drive
+                        .getPose()
+                        .getTranslation()
+                        .minus(
+                            APRILTAG_LAYOUT
+                                .getTagPose(FieldMirroringUtils.isSidePresentedAsRed() ? 4 : 7)
+                                .get()
+                                .toPose2d()
+                                .getTranslation())
+                        .getAngle()));
   }
 
   /**

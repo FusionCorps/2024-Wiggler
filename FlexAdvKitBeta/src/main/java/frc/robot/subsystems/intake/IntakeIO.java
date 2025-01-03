@@ -1,6 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import edu.wpi.first.units.measure.Voltage;
 import frc.robot.Constants.IntakeConstants.IntakeState;
 import org.littletonrobotics.junction.AutoLog;
 
@@ -19,8 +18,6 @@ public interface IntakeIO {
   }
 
   public default void updateInputs(IntakeIOInputs inputs) {}
-
-  public default void setOutputVolts(Voltage volts) {}
 
   public default void setIntakeState(IntakeState state) {}
 }

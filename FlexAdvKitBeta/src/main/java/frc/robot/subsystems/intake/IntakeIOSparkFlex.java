@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.Constants.IntakeConstants.BEAM_BREAK_SENSOR_ID;
 import static frc.robot.Constants.IntakeConstants.INTAKE_MOTOR_ID;
 import static frc.robot.util.SparkUtil.ifOk;
@@ -14,7 +15,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.units.measure.Voltage;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.RobotController;
 import frc.robot.Constants.IntakeConstants.IntakeState;
@@ -41,7 +41,7 @@ public class IntakeIOSparkFlex implements IntakeIO {
         .inverted(false)
         .idleMode(IdleMode.kCoast)
         .voltageCompensation(RobotController.getBatteryVoltage())
-        .smartCurrentLimit(80);
+        .smartCurrentLimit(30);
 
     tryUntilOk(
         intakeMotor,
@@ -53,6 +53,8 @@ public class IntakeIOSparkFlex implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
+    intakeMotor.setVoltage(Volts.of(state.pct * 12.0));
+
     sparkStickyFault = false;
     ifOk(intakeMotor, intakeEncoder::getPosition, position -> inputs.intakePositionRad = position);
     ifOk(
@@ -70,11 +72,6 @@ public class IntakeIOSparkFlex implements IntakeIO {
     inputs.noteInIntake = beamBreakSensor != null && !beamBreakSensor.get();
 
     inputs.intakeState = state;
-  }
-
-  @Override
-  public void setOutputVolts(Voltage volts) {
-    intakeMotor.setVoltage(volts);
   }
 
   @Override

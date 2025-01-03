@@ -83,12 +83,12 @@ public class Module {
   /** Runs the module with the specified output while controlling to zero degrees. */
   public void runCharacterization(double output) {
     // drive
-    // io.setDriveOpenLoop(output);
-    // io.setTurnPosition(new Rotation2d());
+    io.setDriveOpenLoop(output);
+    io.setTurnPosition(new Rotation2d());
 
     // turn
-    io.setDriveOpenLoop(0.0);
-    io.setTurnOpenLoop(output);
+    // io.setDriveOpenLoop(0.0);
+    // io.setTurnOpenLoop(output);
 
     // rotation
     // io.setDriveOpenLoop(output);

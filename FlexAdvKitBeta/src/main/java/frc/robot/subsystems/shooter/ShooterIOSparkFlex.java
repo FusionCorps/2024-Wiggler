@@ -2,7 +2,6 @@ package frc.robot.subsystems.shooter;
 
 import static edu.wpi.first.units.Units.Amps;
 import static edu.wpi.first.units.Units.RPM;
-import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static frc.robot.Constants.ShooterConstants.*;
 import static frc.robot.util.SparkUtil.ifOk;
 import static frc.robot.util.SparkUtil.sparkStickyFault;
@@ -19,7 +18,6 @@ import com.revrobotics.spark.config.ClosedLoopConfig.FeedbackSensor;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.math.filter.Debouncer;
-import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.Constants.ShooterConstants;
 import java.util.function.DoubleSupplier;
 
@@ -81,6 +79,11 @@ public class ShooterIOSparkFlex implements ShooterIO {
 
   @Override
   public void updateInputs(ShooterIOInputs inputs) {
+    topTargetVelocity = inputs.shooterState.topRPM.in(RPM);
+    bottomTargetVelocity = inputs.shooterState.bottomRPM.in(RPM);
+    topController.setReference(topTargetVelocity, ControlType.kVelocity);
+    bottomController.setReference(bottomTargetVelocity, ControlType.kVelocity);
+
     sparkStickyFault = false;
     ifOk(topShooter, topEncoder::getPosition, position -> inputs.topShooterPositionRad = position);
     ifOk(
@@ -119,14 +122,6 @@ public class ShooterIOSparkFlex implements ShooterIO {
     inputs.bottomShooterVelocityRadPerSec = bottomTargetVelocity;
 
     inputs.shooterState = state;
-  }
-
-  @Override
-  public void setVelocity(AngularVelocity topVelocity, AngularVelocity bottomVelocity) {
-    topTargetVelocity = topVelocity.in(RadiansPerSecond);
-    bottomTargetVelocity = bottomVelocity.in(RadiansPerSecond);
-    topController.setReference(topTargetVelocity, ControlType.kVelocity);
-    bottomController.setReference(bottomTargetVelocity, ControlType.kVelocity);
   }
 
   @Override

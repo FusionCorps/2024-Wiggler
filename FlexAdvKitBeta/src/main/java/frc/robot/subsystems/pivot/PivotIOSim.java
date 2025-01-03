@@ -2,11 +2,7 @@ package frc.robot.subsystems.pivot;
 
 import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Volts;
-import static frc.robot.Constants.PivotConstants.PIVOT_AMP_POS_SIM;
 import static frc.robot.Constants.PivotConstants.PIVOT_GEAR_RATIO;
-import static frc.robot.Constants.PivotConstants.PIVOT_SHUTTLING_POS_SIM;
-import static frc.robot.Constants.PivotConstants.PIVOT_STOW_POS_SIM;
-import static frc.robot.Constants.PivotConstants.PIVOT_SUB_POS_SIM;
 import static frc.robot.Constants.PivotConstants.PIVOT_kD;
 import static frc.robot.Constants.PivotConstants.PIVOT_kI;
 import static frc.robot.Constants.PivotConstants.PIVOT_kP;
@@ -31,8 +27,7 @@ public class PivotIOSim implements PivotIO {
           PIVOT_kP, PIVOT_kI, PIVOT_kD, new TrapezoidProfile.Constraints(2500, 2000));
 
   private Angle pivotTargetPosition = Radians.of(0.0);
-
-  private PivotState state = PivotState.SUBWOOFER;
+  private PivotState state = PivotState.INTAKE_SIM;
 
   private Voltage voltsToApply = Volts.of(0.0);
 
@@ -47,9 +42,13 @@ public class PivotIOSim implements PivotIO {
 
   @Override
   public void updateInputs(PivotIOInputs inputs) {
+    if (state != PivotState.MANUAL_OVERRIDE && state != PivotState.AIMING)
+      pivotTargetPosition = state.angle;
+
     inputs.pivotMainConnected = true;
     inputs.pivotFollowerConnected = true;
 
+    // run closed-loop if not in manual override
     if (state != PivotState.MANUAL_OVERRIDE) {
       voltsToApply =
           Volts.of(
@@ -60,7 +59,6 @@ public class PivotIOSim implements PivotIO {
                   12.0));
     }
     pivotSim.setInputVoltage(voltsToApply.in(Volts));
-
     pivotSim.update(0.02);
 
     inputs.pivotMainPositionRad = pivotSim.getAngularPositionRad();
@@ -78,42 +76,17 @@ public class PivotIOSim implements PivotIO {
   }
 
   @Override
-  public void managePosition() {
-    switch (state) {
-      case INTAKE:
-        pivotTargetPosition = PIVOT_STOW_POS_SIM;
-        break;
-      case EXTAKE:
-        pivotTargetPosition = PIVOT_STOW_POS_SIM;
-        break;
-      case SUBWOOFER:
-        pivotTargetPosition = PIVOT_SUB_POS_SIM;
-        break;
-      case AMP:
-        pivotTargetPosition = PIVOT_AMP_POS_SIM;
-        break;
-      case SHUTTLE:
-        pivotTargetPosition = PIVOT_SHUTTLING_POS_SIM;
-        break;
-      case MANUAL_OVERRIDE:
-        break;
-      case AIMING:
-        break;
-    }
-  }
-
-  @Override
-  public void setPivotState(PivotState state) {
+  public void setState(PivotState state) {
     this.state = state;
   }
 
   @Override
-  public void setPivotPct(double pct) {
+  public void setPct(double pct) {
     voltsToApply = Volts.of(pct * SimulatedBattery.getBatteryVoltage().in(Volts));
   }
 
   @Override
-  public void setPivotPosition(Angle position) {
+  public void setTargetPosition(Angle position) {
     pivotTargetPosition = position;
   }
 }

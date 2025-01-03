@@ -4,6 +4,7 @@ import static edu.wpi.first.units.Units.Radians;
 import static edu.wpi.first.units.Units.Rotations;
 import static frc.robot.Constants.PivotConstants.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.units.measure.Angle;
@@ -11,7 +12,10 @@ import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.PivotConstants;
 import frc.robot.Constants.PivotConstants.PivotState;
 import java.util.function.Supplier;
@@ -24,6 +28,11 @@ import org.littletonrobotics.junction.mechanism.LoggedMechanismLigament2d;
 public class Pivot extends SubsystemBase {
   private final PivotIO io;
   private final PivotIOInputsAutoLogged inputs = new PivotIOInputsAutoLogged();
+
+  @AutoLogOutput
+  public Trigger atAngle =
+      new Trigger(
+          () -> MathUtil.isNear(inputs.pivotMainPositionRad, getPosition().in(Radians), 0.001));
 
   @AutoLogOutput private final LoggedMechanism2d pivotMech = new LoggedMechanism2d(2, 2);
   private final LoggedMechanismLigament2d pivotArm =
@@ -42,7 +51,6 @@ public class Pivot extends SubsystemBase {
 
   @Override
   public void periodic() {
-    setDefaultCommand(run(() -> io.managePosition()));
     io.updateInputs(inputs);
     Logger.processInputs("Pivot", inputs);
 
@@ -52,27 +60,21 @@ public class Pivot extends SubsystemBase {
     pivotFollowerDisconnected.set(!inputs.pivotFollowerConnected);
   }
 
-  /**
-   * Instant Command: Sets the pivot position to a specific angle
-   *
-   * @param state - the {@link PivotState} to set the pivot to
-   * @return
-   */
-  public Command setPositionState(PivotState state) {
-    return runOnce(() -> io.setPivotState(state));
+  public Command setState(PivotState state) {
+    return runOnce(() -> io.setState(state));
   }
 
   /**
    * @return the current pivot angle as a {@link Angle} object
    */
-  public Angle getPivotAngle() {
+  public Angle getPosition() {
     return Radians.of(inputs.pivotMainPositionRad);
   }
 
   /**
    * @return the current pivot state as a {@link PivotState} object
    */
-  public PivotState getPivotState() {
+  public PivotState getState() {
     return inputs.pivotState;
   }
 
@@ -80,10 +82,11 @@ public class Pivot extends SubsystemBase {
    * Continuous command: runs the pivot at specific duty cycle and stops it when the command ends
    *
    * @param pct - duty cycle percentage
-   * @return "run-end" {@link Command}
+   * @return "run-end" {@link RunCommand}
    */
   public Command setPivotPctCommand(double pct) {
-    return runEnd(() -> io.setPivotPct(pct), () -> io.setPivotPct(0.0));
+    return setState(PivotState.MANUAL_OVERRIDE)
+        .andThen(runEnd(() -> io.setPct(pct), () -> io.setPct(0.0)));
   }
 
   /**
@@ -92,14 +95,14 @@ public class Pivot extends SubsystemBase {
    * localization is necessary for this to work well
    *
    * @param drivePoseSupplier - a supplier for the robot's current pose
-   * @return {@link Command}
+   * @return {@link SequentialCommandGroup}
    */
   public Command angleToSpeakerCommand(Supplier<Pose2d> drivePoseSupplier) {
     return Commands.sequence(
-        this.setPositionState(PivotState.AIMING),
+        this.setState(PivotState.AIMING),
         run(
             () ->
-                io.setPivotPosition(
+                io.setTargetPosition(
                     Rotations.of(
                         PivotConstants.PIVOT_ANGLES_MAP_SIM.get(
                             drivePoseSupplier
