@@ -1,6 +1,6 @@
 # This is a basic workflow to build robot code.
 
-name: CI
+name: Build Projects
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the main branch.
@@ -34,8 +34,8 @@ jobs:
     - name: Build FlexReboot
       run: cd ./FlexReboot && chmod +x gradlew && ./gradlew build
 
-    - name: Build AdvKit2024
-      run: cd ./AdvKit2024 && chmod +x gradlew && ./gradlew build
+    - name: Build FlexAdvKit2025
+      run: cd ./FlexAdvKit2025 && chmod +x gradlew && ./gradlew build
 
     - name: Build PIDArmSim
       run: cd ./PIDArmSim && chmod +x gradlew && ./gradlew build
